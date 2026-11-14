@@ -133,16 +133,7 @@ jobs:
 
       - name: Extract release notes from CHANGELOG
         run: |
-          # take the "## [<tag>]" section of CHANGELOG.md
-          TAG="${GITHUB_REF_NAME#v}"
-          python3 - "$TAG" <<'EOF'
-          import re, sys
-          tag = sys.argv[1]
-          text = open('CHANGELOG.md').read()
-          m = re.search(rf'## \[{re.escape(tag)}\][^\n]*\n(.*?)(?=\n## \[|\Z)', text, re.S)
-          body = m.group(1).strip() if m else ''
-          open('release-notes.md', 'w').write(body)
-          EOF
+          python3 scripts/extract-release-notes.py "${GITHUB_REF_NAME#v}" CHANGELOG.md release-notes.md
 
       - name: Create release
         uses: softprops/action-gh-release@v2
