@@ -81,7 +81,7 @@ class YggstackService : Service() {
                         .redirectErrorStream(true)
                         .start()
                     process = proc
-                    appendLog("[ygg] yggstack started (pid ${proc!!.pid})")
+                    appendLog("[ygg] yggstack started (pid ${proc.pid()})")
 
                     proc.inputStream.bufferedReader().forEachLine { line ->
                         appendLog(line)

@@ -79,7 +79,7 @@ abstract class BrowserActivity : ThemableActivity(), BrowserContract.View {
         if (this !is IncognitoBrowserActivity) {
             val yggPreferences = acr.browser.lightning.ygg.YggPreferences(this)
             if (yggPreferences.enabled && acr.browser.lightning.ygg.YggNode.binaryExists(this)) {
-                acr.browser.lightning.ygg.YggProxy.apply(this, enabled = true, port = yggPreferences.socksPort)
+                acr.browser.lightning.ygg.YggProxy.apply(enabled = true, port = yggPreferences.socksPort)
                 acr.browser.lightning.ygg.YggstackService.start(this)
             }
         }

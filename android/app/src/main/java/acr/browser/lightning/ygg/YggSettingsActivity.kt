@@ -77,10 +77,10 @@ class YggSettingsActivity : AppCompatActivity() {
 
         if (prefs.enabled) {
             YggstackService.start(this)
-            YggProxy.apply(this, enabled = true, port = prefs.socksPort)
+            YggProxy.apply(enabled = true, port = prefs.socksPort)
         } else {
             YggstackService.stop(this)
-            YggProxy.apply(this, enabled = false, port = prefs.socksPort)
+            YggProxy.apply(enabled = false, port = prefs.socksPort)
         }
 
         Toast.makeText(this, R.string.ygg_settings_saved, Toast.LENGTH_SHORT).show()
