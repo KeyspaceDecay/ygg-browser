@@ -47,14 +47,14 @@ jobs:
             adb install -r "$APK_PATH";
             adb shell pm list packages | grep lightning;
             adb logcat -c;
-            adb shell monkey -p acr.browser.lightning -c android.intent.category.LAUNCHER 1;
+            adb shell monkey -p acr.browser.barebones -c android.intent.category.LAUNCHER 1;
             sleep 25;
             echo "=== crash buffer ===";
             adb logcat -b crash -d;
             echo "=== main errors ===";
             adb logcat -d *:E | grep -iE "lightning|ygg|FATAL|AndroidRuntime" | tail -100;
             echo "=== process alive? ===";
-            adb shell pidof acr.browser.lightning || echo "PROCESS DEAD - CRASHED";
+            adb shell pidof acr.browser.barebones || echo "PROCESS DEAD - CRASHED";
             mkdir -p /tmp/out;
             adb logcat -d > /tmp/out/logcat-full.txt;
             adb logcat -b crash -d > /tmp/out/logcat-crash.txt
