@@ -74,10 +74,8 @@ android {
             }
 
             ndk {
+                // only arm64 is shipped (libyggstack.so)
                 abiFilters.add("arm64-v8a")
-                abiFilters.add("armeabi-v7a")
-                abiFilters.add("armeabi")
-                abiFilters.add("mips")
             }
         }
     }
