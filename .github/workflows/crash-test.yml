@@ -43,7 +43,9 @@ jobs:
           disable-animations: true
           script: |
             set -x
-            adb install -r app/build/outputs/apk/lightningLite/debug/*lite*debug*.apk
+            APK=$(ls android/app/build/outputs/apk/lightningLite/debug/*.apk | head -1)
+            echo "APK=$APK"
+            adb install -r "$APK"
             adb shell pm list packages | grep lightning || true
             adb logcat -c
             adb shell monkey -p acr.browser.lightning -c android.intent.category.LAUNCHER 1
