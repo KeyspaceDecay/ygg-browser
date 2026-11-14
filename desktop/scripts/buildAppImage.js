@@ -4,7 +4,7 @@ const version = packageFile.version
 const Platform = builder.Platform
 const Arch = builder.Arch
 
-require('./createPackage.js')('linux', {arch: Arch.x64}).then(function (path) {
+  require('./createPackage.js')('linux', {arch: Arch.x64}).then(function (path) {
   const options = {
     linux: {
       target: ['AppImage'],
@@ -12,9 +12,10 @@ require('./createPackage.js')('linux', {arch: Arch.x64}).then(function (path) {
       category: 'Network',
       packageCategory: 'Network',
       mimeTypes: ['x-scheme-handler/http', 'x-scheme-handler/https', 'text/html'],
-      synopsis: 'Min is a fast, minimal browser that protects your privacy.',
-      description: 'A web browser with smarter search, improved tab management, and built-in ad blocking. Includes full-text history search, instant answers from DuckDuckGo, the ability to split tabs into groups, and more.',
-      maintainer: 'Min Developers <280953907a@zoho.com>',
+      synopsis: 'A browser that routes all traffic through the end-to-end encrypted Yggdrasil network.',
+      description: 'A crypto-anarchist browser for the Yggdrasil mesh network, based on Min. Includes a built-in yggstack node, fail-closed SOCKS5 routing, .ygg and .pk.ygg name support, and a network settings screen.',
+      maintainer: 'Ygg Browser contributors',
+      artifactName: 'Ygg-Browser-${version}-${arch}.AppImage',
     },
     directories: {
       output: 'dist/app/'

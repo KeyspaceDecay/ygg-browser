@@ -80,8 +80,10 @@ module.exports = function (platform, extraOptions) {
     }[context.electronPlatformName]
 
     const IS_LINUX = context.electronPlatformName === 'linux'
+    /* on Linux the executable is named after package.json "name",
+       on Windows/macOS after productName */
     const executableName = IS_LINUX
-      ? context.packager.appInfo.productFilename.toLowerCase().replace('-dev', '')
+      ? context.packager.appInfo.executableName
       : context.packager.appInfo.productFilename
 
     const electronBinaryPath = path.join(

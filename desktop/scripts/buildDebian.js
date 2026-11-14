@@ -6,15 +6,15 @@ const createPackage = require('./createPackage.js')
 
 async function afterPackageBuilt (path, arch) {
   var installerOptions = {
-    artifactName: 'min-${version}-${arch}.deb',
-    packageName: 'min',
+    artifactName: 'ygg-browser-${version}-${arch}.deb',
+    packageName: 'ygg-browser',
     icon: 'icons/icon256.png',
     category: 'Network;WebBrowser',
     packageCategory: 'Network',
     mimeTypes: ['x-scheme-handler/http', 'x-scheme-handler/https', 'text/html'],
-    maintainer: 'Min Developers <280953907a@zoho.com>',
-    description: 'Min is a fast, minimal browser that protects your privacy.',
-    synopsis: 'A web browser with smarter search, improved tab management, and built-in ad blocking. Includes full-text history search, instant answers from DuckDuckGo, the ability to split tabs into groups, and more.',
+    maintainer: 'Ygg Browser contributors',
+    description: 'A crypto-anarchist browser for the Yggdrasil mesh network.',
+    synopsis: 'A browser that routes all traffic through the end-to-end encrypted Yggdrasil network.',
     depends: [
       'libsecret-1-0',
       'libasound2',

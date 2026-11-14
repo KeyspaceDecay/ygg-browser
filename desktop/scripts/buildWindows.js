@@ -23,11 +23,11 @@ async function afterPackageBuilt (packagePath) {
   }
 
   /* create zip files */
-  var output = fs.createWriteStream('dist/app/' + 'Min-v' + version + '-windows' + archSuffix + '.zip')
+  var output = fs.createWriteStream('dist/app/' + 'Ygg-Browser-v' + version + '-windows' + archSuffix + '.zip')
   var archive = archiver('zip', {
     zlib: { level: 9 }
   })
-  archive.directory(packagePath, 'Min-v' + version)
+  archive.directory(packagePath, 'Ygg-Browser-v' + version)
   archive.pipe(output)
   await archive.finalize()
 
@@ -36,10 +36,11 @@ async function afterPackageBuilt (packagePath) {
 
   const options = {
     src: packagePath,
-    dest: 'dist/app/min-installer' + archSuffix,
+    dest: 'dist/app/ygg-browser-installer' + archSuffix,
+    name: 'ygg-browser',
     icon: 'icons/icon256.ico',
     animation: 'icons/windows-installer.gif',
-    licenseUrl: 'https://github.com/minbrowser/min/blob/master/LICENSE.txt',
+    licenseUrl: 'https://github.com/CypherpunksWriteCode/ygg-browser/blob/main/LICENSE',
     noMsi: true
   }
 
@@ -49,7 +50,7 @@ async function afterPackageBuilt (packagePath) {
 
   await installer(options)
     .then(function () {
-      fs.renameSync('./dist/app/min-installer' + archSuffix + '/min-' + version + '-setup.exe', './dist/app/min-' + version + archSuffix + '-setup.exe')
+      fs.renameSync('./dist/app/ygg-browser-installer' + archSuffix + '/ygg-browser-' + version + '-setup.exe', './dist/app/ygg-browser-' + version + archSuffix + '-setup.exe')
     })
     .catch(err => {
       console.error(err, err.stack)
