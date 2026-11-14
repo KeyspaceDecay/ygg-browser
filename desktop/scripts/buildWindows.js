@@ -40,7 +40,7 @@ async function afterPackageBuilt (packagePath) {
     name: 'ygg-browser',
     icon: 'icons/icon256.ico',
     animation: 'icons/windows-installer.gif',
-    licenseUrl: 'https://github.com/CypherpunksWriteCode/ygg-browser/blob/main/LICENSE',
+    licenseUrl: 'https://github.com/KeyspaceDecay/ygg-browser/blob/main/LICENSE',
     noMsi: true
   }
 
