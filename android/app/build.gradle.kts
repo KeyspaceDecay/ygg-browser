@@ -41,6 +41,18 @@ android {
         compose = true
     }
 
+    signingConfigs {
+        create("yggRelease") {
+            val keystoreFile = System.getenv("KEYSTORE_FILE")
+            if (keystoreFile != null) {
+                storeFile = file(keystoreFile)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         named("debug") {
             isMinifyEnabled = false
@@ -56,6 +68,10 @@ android {
             setProguardFiles(listOf("proguard-project.txt"))
             enableUnitTestCoverage = false
             enableAndroidTestCoverage = false
+
+            if (System.getenv("KEYSTORE_FILE") != null) {
+                signingConfig = signingConfigs.getByName("yggRelease")
+            }
 
             ndk {
                 abiFilters.add("arm64-v8a")

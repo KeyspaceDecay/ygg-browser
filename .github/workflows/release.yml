@@ -104,14 +104,27 @@ jobs:
             https://github.com/yggdrasil-network/yggstack/releases/download/1.0.6/yggstack-android-arm64
           chmod +x app/src/main/jniLibs/arm64-v8a/libyggstack.so
 
-      - name: Build APK
-        run: ./gradlew :app:assembleLightningLiteDebug --stacktrace
+      - name: Prepare signing keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > /tmp/ygg-release.keystore
+
+      - name: Build signed release APK
+        env:
+          KEYSTORE_FILE: /tmp/ygg-release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew :app:assembleLightningLiteRelease --stacktrace
+
+      - name: Stage APK
+        run: |
+          cp app/build/outputs/apk/lightningLite/release/*.apk "Ygg-Browser-v${GITHUB_REF_NAME#v}-android-arm64.apk"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ygg-browser-android
-          path: android/app/build/outputs/apk/lightningLite/debug/*.apk
+          path: "Ygg-Browser-v*-android-arm64.apk"
 
   github-release:
     name: Create GitHub release

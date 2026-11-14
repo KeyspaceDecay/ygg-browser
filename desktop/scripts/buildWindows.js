@@ -1,67 +1,52 @@
-const fs = require('fs')
-const archiver = require('archiver')
 const builder = require('electron-builder')
 const Arch = builder.Arch
-
-const packageFile = require('./../package.json')
-const version = packageFile.version
+const Platform = builder.Platform
 
 const createPackage = require('./createPackage.js')
 
-async function afterPackageBuilt (packagePath) {
-  /* create output directory if it doesn't exist */
-  if (!fs.existsSync('dist/app')) {
-    fs.mkdirSync('dist/app')
-  }
+/*
+Builds NSIS installers for Windows (x64 and arm64). NSIS is used instead
+of Squirrel because it works reliably in CI and produces a classic
+setup.exe with selectable install directory.
+*/
 
-  let archSuffix
-
-  if (packagePath.includes('arm64')) {
-    archSuffix = '-arm64'
-  } else {
-    archSuffix = ''
-  }
-
-  /* create zip files */
-  var output = fs.createWriteStream('dist/app/' + 'Ygg-Browser-v' + version + '-windows' + archSuffix + '.zip')
-  var archive = archiver('zip', {
-    zlib: { level: 9 }
-  })
-  archive.directory(packagePath, 'Ygg-Browser-v' + version)
-  archive.pipe(output)
-  await archive.finalize()
-
-  /* create installer */
-  const installer = require('electron-installer-windows')
+async function buildArch (arch, suffix) {
+  const appDir = await createPackage('win32', { arch })
 
   const options = {
-    src: packagePath,
-    dest: 'dist/app/ygg-browser-installer' + archSuffix,
-    name: 'ygg-browser',
-    icon: 'icons/icon256.ico',
-    animation: 'icons/windows-installer.gif',
-    licenseUrl: 'https://github.com/KeyspaceDecay/ygg-browser/blob/main/LICENSE',
-    noMsi: true
+    appId: 'io.github.keyspacedecay.ygg-browser',
+    productName: 'Ygg Browser',
+    win: {
+      icon: 'icons/icon256.ico',
+      artifactName: 'Ygg-Browser-Setup-${version}-' + suffix + '.${ext}'
+    },
+    nsis: {
+      oneClick: false,
+      allowToChangeInstallationDirectory: true,
+      license: 'LICENSE.txt',
+      perMachine: false,
+      deleteAppDataOnUninstall: false
+    },
+    directories: {
+      output: 'dist/app/',
+      buildResources: 'resources'
+    },
+    publish: null
   }
 
-  console.log('Creating package (this may take a while)')
-
-  fs.copyFileSync('LICENSE.txt', packagePath + '/LICENSE')
-
-  await installer(options)
-    .then(function () {
-      fs.renameSync('./dist/app/ygg-browser-installer' + archSuffix + '/ygg-browser-' + version + '-setup.exe', './dist/app/ygg-browser-' + version + archSuffix + '-setup.exe')
-    })
-    .catch(err => {
-      console.error(err, err.stack)
-      process.exit(1)
-    })
+  await builder.build({
+    prepackaged: appDir,
+    targets: Platform.WINDOWS.createTarget(['nsis'], arch),
+    config: options
+  })
 }
 
-// creating multiple packages simultaneously causes errors in electron-rebuild, so do one arch at a time instead
-createPackage('win32', { arch: Arch.x64 })
-  .then(afterPackageBuilt)
-  .then(function () {
-    return createPackage('win32', { arch: Arch.arm64 })
-  })
-  .then(afterPackageBuilt)
+;(async () => {
+  await buildArch(Arch.x64, 'x64')
+  await buildArch(Arch.arm64, 'arm64')
+    .catch(err => {
+      // arm64 windows is nice to have; don't fail the release for it
+      console.warn('skipping win-arm64:', err.message)
+    })
+  console.log('done')
+})()
