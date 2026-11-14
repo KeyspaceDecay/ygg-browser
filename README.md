@@ -1,13 +1,11 @@
 # Ygg Browser
 
-**A crypto-anarchist browser for the [Yggdrasil](https://yggdrasil-network.github.io/) mesh network.**
+A crypto-anarchist browser for the [Yggdrasil](https://yggdrasil-network.github.io/) mesh network.
 Windows · Linux · Android
 
-```
-        your keys  ·  your address  ·  no ICANN  ·  no ISP  ·  no permission
-```
+> Your keys. Your address. No ICANN, no ISPs, no permission.
 
-Ygg Browser is a fork of two great open-source browsers — [Min](https://github.com/minbrowser/min)
+Ygg Browser is a fork of two respected open-source browsers — [Min](https://github.com/minbrowser/min)
 (desktop, Apache-2.0) and [Lightning](https://github.com/anthonycr/Lightning-Browser)
 (Android, MPL-2.0) — with a built-in [yggstack](https://github.com/yggdrasil-network/yggstack)
 sidecar that turns the browser into a full node of the Yggdrasil network.
@@ -157,13 +155,3 @@ vendor/    yggstack release binaries (not committed, downloaded on demand)
   band when it matters (the `.pk.ygg` name *is* the key).
 - The browser only protects what goes through it; other apps on your
   system use the normal internet.
-
----
-
-### По-русски, коротко
-
-**Ygg Browser** — криптоанархичный браузер для ячеистой сети Yggdrasil:
-форк Min (десктоп) и Lightning (Android) со встроенным yggstack-нодой.
-Без рута, без TUN, без телеметрии. Ключ = адрес = личность, весь трафик —
-только через Yggdrasil (fail-closed). Настройки сети: меню →
-«Yggdrasil Network». Подробности и сборка — выше по тексту.

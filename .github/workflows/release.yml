@@ -125,11 +125,28 @@ jobs:
         with:
           path: artifacts
 
+      - name: Stage release files
+        run: |
+          mkdir -p release
+          find artifacts -type f \( -name '*.exe' -o -name '*.zip' -o -name '*.deb' -o -name '*.AppImage' -o -name '*.apk' \) -exec cp {} release/ \;
+          cd release && sha256sum * > SHA256SUMS.txt
+
+      - name: Extract release notes from CHANGELOG
+        run: |
+          # take the "## [<tag>]" section of CHANGELOG.md
+          TAG="${GITHUB_REF_NAME#v}"
+          python3 - "$TAG" <<'EOF'
+          import re, sys
+          tag = sys.argv[1]
+          text = open('CHANGELOG.md').read()
+          m = re.search(rf'## \[{re.escape(tag)}\][^\n]*\n(.*?)(?=\n## \[|\Z)', text, re.S)
+          body = m.group(1).strip() if m else ''
+          open('release-notes.md', 'w').write(body)
+          EOF
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
-          generate_release_notes: true
+          body_path: release-notes.md
           files: |
-            artifacts/ygg-browser-windows/*
-            artifacts/ygg-browser-linux/*
-            artifacts/ygg-browser-android/*
+            release/*
