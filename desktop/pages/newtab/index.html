@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="UTF-8" />
+    <title>New Tab</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(1200px 500px at 50% -200px, rgba(46, 125, 50, 0.28), transparent),
+          #0b100c;
+        color: #c8e6c9;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 7vh 24px 48px;
+      }
+
+      .tree {
+        font-size: 64px;
+        line-height: 1;
+        filter: drop-shadow(0 0 18px rgba(76, 175, 80, 0.55));
+        margin-bottom: 12px;
+      }
+
+      h1 {
+        font-size: 28px;
+        font-weight: 300;
+        letter-spacing: 6px;
+        margin: 0 0 6px;
+        color: #a5d6a7;
+        text-transform: uppercase;
+      }
+
+      .subtitle {
+        font-size: 13px;
+        opacity: 0.55;
+        margin: 0 0 40px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+        gap: 14px;
+        width: 100%;
+        max-width: 860px;
+      }
+
+      a.card {
+        display: block;
+        background: rgba(27, 94, 32, 0.12);
+        border: 1px solid rgba(102, 187, 106, 0.25);
+        border-radius: 10px;
+        padding: 16px;
+        text-decoration: none;
+        color: inherit;
+        transition: border-color 0.15s, background 0.15s, transform 0.15s;
+      }
+
+      a.card:hover {
+        border-color: rgba(129, 199, 132, 0.7);
+        background: rgba(27, 94, 32, 0.22);
+        transform: translateY(-2px);
+      }
+
+      .card .glyph {
+        font-size: 22px;
+        margin-bottom: 8px;
+        display: block;
+      }
+
+      .card .name {
+        font-weight: 600;
+        font-size: 15px;
+        color: #c5e1a5;
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .card .desc {
+        font-size: 12px;
+        opacity: 0.6;
+        line-height: 1.4;
+        display: block;
+      }
+
+      .hint {
+        margin-top: 44px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12px;
+        opacity: 0.45;
+        text-align: center;
+        line-height: 1.8;
+      }
+
+      .hint code {
+        background: rgba(127, 127, 127, 0.2);
+        padding: 1px 6px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="tree">&#127795;</div>
+    <h1>Yggdrasil</h1>
+    <p class="subtitle">[ your keys &middot; your address &middot; no permission needed ]</p>
+
+    <div class="grid">
+      <a class="card" href="http://d40d4a7153cf288ea28f1865f6cfe95143a478b5c8c9e7cb002a0633d10a53eb.pk.ygg/">
+        <span class="glyph">&#128218;</span>
+        <span class="name">HowToYgg Wiki</span>
+        <span class="desc">Guides and how-tos for the Yggdrasil network</span>
+      </a>
+      <a class="card" href="http://[200:b48d:469e:c7c7:3e13:c41d:ba4d:d2b8]/">
+        <span class="glyph">&#128269;</span>
+        <span class="name">Search</span>
+        <span class="desc">Yggdrasil community search engine</span>
+      </a>
+      <a class="card" href="http://[21e:a51c:885b:7db0:166e:927:98cd:d186]/">
+        <span class="glyph">&#128204;</span>
+        <span class="name">Web Directory</span>
+        <span class="desc">Hand-picked sites inside the network</span>
+      </a>
+      <a class="card" href="http://[227:bc24:9a82:e290:7f4a:f992:2ef6:5b34]/">
+        <span class="glyph">&#128506;</span>
+        <span class="name">Yggdrasil Map</span>
+        <span class="desc">Live map of network nodes</span>
+      </a>
+      <a class="card" href="http://[21a:34aa:c782:3ad2:1bf8:73f8:141:66e8]">
+        <span class="glyph">&#128172;</span>
+        <span class="name">Forum</span>
+        <span class="desc">Forum in Yggdrasil, about Yggdrasil</span>
+      </a>
+      <a class="card" href="http://[201:1592:3bff:105:b35f:c25b:4d3:c056]/">
+        <span class="glyph">&#127909;</span>
+        <span class="name">Media Hosting</span>
+        <span class="desc">Image, video and music hosting</span>
+      </a>
+      <a class="card" href="http://[300:8101:e046:d91e::5]">
+        <span class="glyph">&#127793;</span>
+        <span class="name">Yggdrasil Project</span>
+        <span class="desc">The project's own home node</span>
+      </a>
+      <a class="card" href="http://[200:56bd:a9e9:c1fa:8f99:1d3c:3c84:6507]">
+        <span class="glyph">&#129523;</span>
+        <span class="name">IP Checker</span>
+        <span class="desc">Check which address the network sees</span>
+      </a>
+    </div>
+
+    <p class="hint">
+      type a Yggdrasil address like <code>201:a8b5::1</code> &middot; a name like <code>site.pk.ygg</code>
+      &middot; or search<br />
+      sites are reachable end-to-end encrypted &mdash; no ISPs, no ICANN, no cens<br />
+      <a href="min://app/pages/yggSettings/index.html" style="color: #81c784">network settings</a>
+    </p>
+  </body>
+
+</html>

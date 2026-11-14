@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ygg Browser: a stylized world tree / mesh network -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- trunk -->
+    <path
+        android:strokeColor="#7CD992"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M54,80 L54,40" />
+
+    <!-- branches -->
+    <path
+        android:strokeColor="#7CD992"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M54,54 L36,38" />
+    <path
+        android:strokeColor="#7CD992"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M54,54 L72,38" />
+    <path
+        android:strokeColor="#7CD992"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M54,44 L54,28" />
+
+    <!-- roots -->
+    <path
+        android:strokeColor="#7CD992"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M54,80 L42,92" />
+    <path
+        android:strokeColor="#7CD992"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:pathData="M54,80 L66,92" />
+
+    <!-- nodes -->
+    <path
+        android:fillColor="#7CD992"
+        android:pathData="M54,22 a6,6 0 1,0 0,12 a6,6 0 1,0 0,-12 z" />
+    <path
+        android:fillColor="#7CD992"
+        android:pathData="M36,32 a5,5 0 1,0 0,10 a5,5 0 1,0 0,-10 z" />
+    <path
+        android:fillColor="#7CD992"
+        android:pathData="M72,32 a5,5 0 1,0 0,10 a5,5 0 1,0 0,-10 z" />
+    <path
+        android:fillColor="#7CD992"
+        android:pathData="M42,92 a4,4 0 1,0 0,8 a4,4 0 1,0 0,-8 z" />
+    <path
+        android:fillColor="#7CD992"
+        android:pathData="M66,92 a4,4 0 1,0 0,8 a4,4 0 1,0 0,-8 z" />
+</vector>

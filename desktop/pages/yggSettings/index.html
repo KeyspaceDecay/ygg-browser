@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="UTF-8" />
+    <title>Yggdrasil Network</title>
+
+    <link rel="stylesheet" href="../../css/base.css" />
+    <link rel="stylesheet" href="../../pages/pagebase.css" />
+    <link rel="stylesheet" href="../../ext/icons/iconfont.css" />
+    <link rel="stylesheet" href="yggSettings.css" />
+  </head>
+
+  <body>
+    <div class="short-hero ygg-gradient-background">
+      <div class="container">
+        <div class="ygg-hero">
+          <div class="ygg-tree" aria-hidden="true">&#127795;</div>
+          <div>
+            <h2>Yggdrasil Network</h2>
+            <p>An end-to-end encrypted IPv6 overlay network. Your keys, your address, your routes.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-container">
+      <h3>Status</h3>
+
+      <div class="ygg-status-card" id="ygg-status-card">
+        <div class="ygg-status-row">
+          <span class="ygg-status-dot" id="ygg-status-dot"></span>
+          <span id="ygg-status-text">Loading...</span>
+        </div>
+        <div class="ygg-identity">
+          <div class="ygg-id-row" id="ygg-address-row" hidden>
+            <label>IPv6 address</label>
+            <code id="ygg-address"></code>
+            <button class="ygg-copy-button" data-copy-target="ygg-address" title="Copy">
+              <i class="i carbon:copy"></i>
+            </button>
+          </div>
+          <div class="ygg-id-row" id="ygg-publickey-row" hidden>
+            <label>Public key</label>
+            <code id="ygg-publickey"></code>
+            <button class="ygg-copy-button" data-copy-target="ygg-publickey" title="Copy">
+              <i class="i carbon:copy"></i>
+            </button>
+          </div>
+          <div class="ygg-id-row" id="ygg-subnet-row" hidden>
+            <label>Subnet</label>
+            <code id="ygg-subnet"></code>
+          </div>
+          <div class="ygg-id-row">
+            <label>Resolver name</label>
+            <code id="ygg-resolver"></code>
+          </div>
+          <div class="ygg-id-row">
+            <label>SOCKS proxy</label>
+            <code id="ygg-socks"></code>
+          </div>
+        </div>
+        <p class="ygg-hint">
+          Your private key never leaves this device. Anyone can reach you at
+          <em>your address</em>, and you can host a site by publishing it as
+          <em>&lt;publickey&gt;.pk.ygg</em>.
+        </p>
+      </div>
+
+      <h3>Settings</h3>
+
+      <div class="setting-section">
+        <div class="setting-option">
+          <input type="checkbox" id="ygg-enabled" />
+          <label for="ygg-enabled">Start the Yggdrasil sidecar (yggstack) with the browser</label>
+        </div>
+        <div class="setting-option">
+          <input type="checkbox" id="ygg-proxy" />
+          <label for="ygg-proxy">
+            Route all browsing through Yggdrasil (recommended &mdash; non-Ygg sites will be unreachable)
+          </label>
+        </div>
+        <div class="setting-option">
+          <label for="ygg-mode">Process mode</label>
+          <select id="ygg-mode">
+            <option value="embedded">Embedded &mdash; manage a bundled yggstack binary</option>
+            <option value="external">External &mdash; connect to an already-running yggstack</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="setting-section">
+        <label for="ygg-peers">
+          Peers (one per line) &mdash; pick a few nearby peers from
+          publicpeers.neilalexander.dev
+        </label>
+        <textarea id="ygg-peers" rows="5" spellcheck="false" placeholder="tcp://host:port&#10;tls://host:port&#10;quic://host:port"></textarea>
+      </div>
+
+      <div class="setting-section ygg-two-col">
+        <div>
+          <label for="ygg-socks-host">SOCKS host</label>
+          <input type="text" id="ygg-socks-host" spellcheck="false" />
+        </div>
+        <div>
+          <label for="ygg-socks-port">SOCKS port</label>
+          <input type="number" id="ygg-socks-port" min="1" max="65535" />
+        </div>
+      </div>
+
+      <div class="setting-section">
+        <label for="ygg-nameserver">
+          DNS server for .ygg names (optional), e.g. [324:71e:281a:9ed3::53]:53
+        </label>
+        <input type="text" id="ygg-nameserver" spellcheck="false" placeholder="[324:71e:281a:9ed3::53]:53" />
+      </div>
+
+      <div class="setting-section">
+        <button class="ygg-primary-button" id="ygg-save">Save &amp; restart network</button>
+        <span id="ygg-saved-indicator" hidden>Saved</span>
+      </div>
+
+      <h3>Logs</h3>
+      <pre id="ygg-log" class="ygg-log"></pre>
+    </div>
+
+    <script src="yggSettings.js"></script>
+  </body>
+
+</html>

@@ -1,0 +1,6 @@
+# downloaded yggstack binaries (build-time artifacts)
+vendor/yggstack/
+desktop/bin/
+
+# android: yggstack binary downloaded at build time
+android/app/src/main/jniLibs/
