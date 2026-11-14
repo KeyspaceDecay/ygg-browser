@@ -83,7 +83,7 @@ module.exports = function (platform, extraOptions) {
     /* on Linux the executable is named after package.json "name",
        on Windows/macOS after productName */
     const executableName = IS_LINUX
-      ? context.packager.appInfo.executableName
+      ? require('../package.json').name
       : context.packager.appInfo.productFilename
 
     const electronBinaryPath = path.join(

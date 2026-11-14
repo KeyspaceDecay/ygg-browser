@@ -105,13 +105,13 @@ jobs:
           chmod +x app/src/main/jniLibs/arm64-v8a/libyggstack.so
 
       - name: Build APK
-        run: ./gradlew lightningLiteDebug assembleDebug --stacktrace
+        run: ./gradlew :app:assembleLightningLiteDebug --stacktrace
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ygg-browser-android
-          path: android/app/build/outputs/apk/**/lite/debug/*.apk
+          path: android/app/build/outputs/apk/lightningLite/debug/*.apk
 
   github-release:
     name: Create GitHub release
