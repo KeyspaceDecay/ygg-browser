@@ -93,7 +93,7 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - uses: android-actions/setup-android@v3
+      # the ubuntu-latest runner already ships the Android SDK with accepted licenses
 
       - name: Download yggstack binary (arm64)
         run: |
