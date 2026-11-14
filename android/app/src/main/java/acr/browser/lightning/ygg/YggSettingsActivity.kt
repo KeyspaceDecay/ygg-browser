@@ -1,6 +1,7 @@
 package acr.browser.lightning.ygg
 
 import android.os.Bundle
+import android.content.Intent
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.EditText
@@ -14,6 +15,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import acr.browser.lightning.R
+import java.io.File
 
 /**
  * Yggdrasil network settings: status, identity, peers and proxy options.
@@ -30,6 +32,8 @@ class YggSettingsActivity : AppCompatActivity() {
     private lateinit var portInput: EditText
     private lateinit var nameserverInput: EditText
     private lateinit var saveButton: Button
+    private lateinit var crashView: TextView
+    private lateinit var shareCrashButton: Button
 
     private val prefs by lazy { YggPreferences(this) }
 
@@ -59,6 +63,10 @@ class YggSettingsActivity : AppCompatActivity() {
         nameserverInput.setText(prefs.nameserver)
 
         saveButton.setOnClickListener { saveAndRestart() }
+
+        crashView = findViewById(R.id.ygg_crash_log)
+        shareCrashButton = findViewById(R.id.ygg_share_crash)
+        setupDiagnostics()
 
         refreshIdentity()
         window.decorView.post { refreshLog() }
@@ -123,6 +131,25 @@ class YggSettingsActivity : AppCompatActivity() {
             withContext(Dispatchers.Main) {
                 logView.text = log.ifBlank { getString(R.string.ygg_log_empty) }
             }
+        }
+    }
+
+    private fun latestCrashLog(): String? {
+        return runCatching {
+            val dir = File(filesDir, "crash-logs")
+            dir.listFiles()?.maxByOrNull { it.name }?.takeIf { it.length() > 0 }?.readText()
+        }.getOrNull()
+    }
+
+    private fun setupDiagnostics() {
+        crashView.text = latestCrashLog() ?: getString(R.string.ygg_crash_empty)
+        shareCrashButton.setOnClickListener {
+            val text = latestCrashLog() ?: return@setOnClickListener
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TEXT, text)
+            }
+            startActivity(Intent.createChooser(intent, getString(R.string.ygg_share_crash)))
         }
     }
 

@@ -75,12 +75,17 @@ abstract class BrowserActivity : ThemableActivity(), BrowserContract.View {
 
         super.onCreate(savedInstanceState)
 
-        // start the Yggdrasil gateway and route WebView traffic through it
+        // start the Yggdrasil gateway and route WebView traffic through it;
+        // a failure here must never take the browser down with it
         if (this !is IncognitoBrowserActivity) {
-            val yggPreferences = acr.browser.lightning.ygg.YggPreferences(this)
-            if (yggPreferences.enabled && acr.browser.lightning.ygg.YggNode.binaryExists(this)) {
-                acr.browser.lightning.ygg.YggProxy.apply(enabled = true, port = yggPreferences.socksPort)
-                acr.browser.lightning.ygg.YggstackService.start(this)
+            runCatching {
+                val yggPreferences = acr.browser.lightning.ygg.YggPreferences(this)
+                if (yggPreferences.enabled && acr.browser.lightning.ygg.YggNode.binaryExists(this)) {
+                    acr.browser.lightning.ygg.YggProxy.apply(enabled = true, port = yggPreferences.socksPort)
+                    acr.browser.lightning.ygg.YggstackService.start(this)
+                }
+            }.onFailure {
+                android.util.Log.e("Ygg", "failed to start Yggdrasil integration", it)
             }
         }
 

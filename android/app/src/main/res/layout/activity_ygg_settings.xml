@@ -164,6 +164,31 @@
                 android:textColor="#9ccc9c"
                 android:textSize="11sp" />
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/ygg_crash_section"
+                android:textAppearance="?attr/textAppearanceHeadlineSmall" />
+
+            <TextView
+                android:id="@+id/ygg_crash_log"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:fontFamily="monospace"
+                android:text="@string/ygg_crash_empty"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textIsSelectable="true"
+                android:textSize="11sp" />
+
+            <Button
+                android:id="@+id/ygg_share_crash"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/ygg_share_crash" />
+
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

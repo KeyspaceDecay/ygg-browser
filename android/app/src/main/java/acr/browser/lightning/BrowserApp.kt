@@ -77,6 +77,26 @@ class BrowserApp : Application() {
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
 
         Thread.setDefaultUncaughtExceptionHandler { thread, ex ->
+            // always keep a local crash log (no telemetry: the user decides
+            // whether to share it, from Yggdrasil network settings)
+            runCatching {
+                val dir = File(filesDir, "crash-logs").apply { mkdirs() }
+                val old = dir.listFiles()?.sortedBy { it.name } ?: emptyList()
+                if (old.size >= 5) {
+                    old.take(old.size - 4).forEach { it.delete() }
+                }
+                val file = File(dir, "crash-" + System.currentTimeMillis() + ".txt")
+                file.writeText(
+                    buildString {
+                        appendLine("time: " + java.util.Date())
+                        appendLine("thread: " + thread.name)
+                        appendLine("version: " + BuildConfig.VERSION_NAME + " (" + BuildConfig.VERSION_CODE + ")")
+                        appendLine("android: " + Build.VERSION.SDK_INT + " / " + Build.VERSION.INCREMENTAL)
+                        appendLine()
+                        appendLine(android.util.Log.getStackTraceString(ex))
+                    }
+                )
+            }
             if (BuildConfig.DEBUG) {
                 FileUtils.writeCrashToStorage(ex)
             }

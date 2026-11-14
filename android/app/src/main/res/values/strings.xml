@@ -378,4 +378,7 @@
     <string name="ygg_save_label">Save &amp; restart network</string>
     <string name="ygg_settings_saved">Saved</string>
     <string name="ygg_log_empty">No log output yet</string>
+    <string name="ygg_crash_section">Diagnostics</string>
+    <string name="ygg_crash_empty">No crashes recorded</string>
+    <string name="ygg_share_crash">Share crash log</string>
 </resources>

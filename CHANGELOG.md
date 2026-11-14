@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-15
+
+### Added
+
+- Local crash logging (kept on-device, shareable from
+  Yggdrasil settings — Diagnostics) instead of any telemetry
+- Diagnostics section in the Android network settings screen
+
+### Fixed
+
+- Android: app name is now "Ygg Browser" in every locale
+- Android: only arm64-v8a is packaged (no dead ABI filters)
+- Android: failures of the Yggdrasil integration can no longer
+  crash the browser at startup
+- Windows: NSIS installer replaces Squirrel (works reliably in CI)
+- Release: APK is a signed release build; SHA256SUMS cover all assets
+
 ## [0.1.0] - 2026-11-15
 
 First public release.
@@ -37,5 +54,6 @@ First public release.
   yggstack nodes, SOCKS5 fetch via raw address and `.pk.ygg`), release
   packaging for Windows, Linux and Android
 
-[Unreleased]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/KeyspaceDecay/ygg-browser/releases/tag/v0.1.0
