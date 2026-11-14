@@ -41,23 +41,22 @@ jobs:
           target: default
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
-          script: |
-            set -x
-            APK=$(ls android/app/build/outputs/apk/lightningLite/debug/*.apk | head -1)
-            echo "APK=$APK"
-            adb install -r "$APK"
-            adb shell pm list packages | grep lightning || true
-            adb logcat -c
-            adb shell monkey -p acr.browser.lightning -c android.intent.category.LAUNCHER 1
-            sleep 25
-            echo "=== crash buffer ==="
-            adb logcat -b crash -d
-            echo "=== main errors ==="
-            adb logcat -d *:E | grep -iE "lightning|ygg|FATAL|AndroidRuntime" | tail -100 || true
-            echo "=== process alive? ==="
-            adb shell pidof acr.browser.lightning || echo "PROCESS DEAD - CRASHED"
-            mkdir -p /tmp/out
-            adb logcat -d > /tmp/out/logcat-full.txt
+          script: >-
+            APK_PATH=$(ls android/app/build/outputs/apk/lightningLite/debug/*.apk | head -1);
+            echo "APK=$APK_PATH";
+            adb install -r "$APK_PATH";
+            adb shell pm list packages | grep lightning;
+            adb logcat -c;
+            adb shell monkey -p acr.browser.lightning -c android.intent.category.LAUNCHER 1;
+            sleep 25;
+            echo "=== crash buffer ===";
+            adb logcat -b crash -d;
+            echo "=== main errors ===";
+            adb logcat -d *:E | grep -iE "lightning|ygg|FATAL|AndroidRuntime" | tail -100;
+            echo "=== process alive? ===";
+            adb shell pidof acr.browser.lightning || echo "PROCESS DEAD - CRASHED";
+            mkdir -p /tmp/out;
+            adb logcat -d > /tmp/out/logcat-full.txt;
             adb logcat -b crash -d > /tmp/out/logcat-crash.txt
 
       - name: Upload logs
