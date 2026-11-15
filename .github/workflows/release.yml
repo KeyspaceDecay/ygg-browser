@@ -80,8 +80,9 @@ jobs:
             desktop/dist/app/*.AppImage
 
   android:
-    name: Android APK
+    name: Android APK (Fenix/Gecko)
     runs-on: ubuntu-latest
+    timeout-minutes: 350
     defaults:
       run:
         working-directory: android
@@ -91,11 +92,9 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 25
+          java-version: 21
 
       - uses: gradle/actions/setup-gradle@v6
-
-      # the ubuntu-latest runner already ships the Android SDK with accepted licenses
 
       - name: Download yggstack binary (arm64)
         run: |
@@ -108,23 +107,23 @@ jobs:
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > /tmp/ygg-release.keystore
 
-      - name: Build signed release APK
+      - name: Build signed Fenix nightly APK
         env:
           KEYSTORE_FILE: /tmp/ygg-release.keystore
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: ./gradlew :app:assembleLightningLiteRelease --stacktrace
+        run: ./gradlew :app:assembleFenixNightly --stacktrace -x lint -PdisableOptimization
 
       - name: Stage APK
         run: |
-          cp app/build/outputs/apk/lightningLite/release/*.apk "Ygg-Browser-v${GITHUB_REF_NAME#v}-android-arm64.apk"
+          cp app/build/outputs/apk/fenixNightly/*.apk "../Ygg-Browser-v${GITHUB_REF_NAME#v}-android-arm64.apk"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ygg-browser-android
-          path: "android/Ygg-Browser-v*-android-arm64.apk"
+          path: "Ygg-Browser-v*-android-arm64.apk"
           if-no-files-found: error
 
   github-release:

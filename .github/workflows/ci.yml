@@ -42,8 +42,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   android:
-    name: Android (assemble debug)
+    name: Android (Fenix debug)
     runs-on: ubuntu-latest
+    timeout-minutes: 350
     defaults:
       run:
         working-directory: android
@@ -53,11 +54,9 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 25
+          java-version: 21
 
       - uses: gradle/actions/setup-gradle@v6
-
-      # the ubuntu-latest runner already ships the Android SDK with accepted licenses
 
       - name: Download yggstack binary (arm64)
         run: |
@@ -66,11 +65,12 @@ jobs:
             https://github.com/yggdrasil-network/yggstack/releases/download/1.0.6/yggstack-android-arm64
           chmod +x app/src/main/jniLibs/arm64-v8a/libyggstack.so
 
-      - name: Build debug APK (lite flavor)
-        run: ./gradlew :app:assembleLightningLiteDebug --stacktrace
+      - name: Build Fenix debug APK
+        run: ./gradlew :app:assembleFenixDebug --stacktrace -x lint
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: ygg-browser-android-debug
-          path: android/app/build/outputs/apk/lightningLite/debug/*.apk
+          path: android/app/build/outputs/apk/fenixDebug/*.apk
+          if-no-files-found: error
