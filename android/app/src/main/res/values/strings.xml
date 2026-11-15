@@ -381,4 +381,5 @@
     <string name="ygg_crash_section">Diagnostics</string>
     <string name="ygg_crash_empty">No crashes recorded</string>
     <string name="ygg_share_crash">Share crash log</string>
+    <string name="ygg_diag_title">Ygg Diagnostics</string>
 </resources>

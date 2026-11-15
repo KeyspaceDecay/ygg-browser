@@ -30,16 +30,10 @@ jobs:
             https://github.com/yggdrasil-network/yggstack/releases/download/1.0.6/yggstack-android-amd64
           chmod +x app/src/main/jniLibs/*/libyggstack.so
 
-      - name: Build signed release APK
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > /tmp/ygg-release.keystore
-          KEYSTORE_FILE=/tmp/ygg-release.keystore ./gradlew :app:assembleLightningLiteRelease --stacktrace
+      - name: Build debug APK (x86_64 for emulator)
+        run: ./gradlew :app:assembleLightningLiteDebug --stacktrace
 
-      - name: Run release APK on emulator
+      - name: Run on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -48,7 +42,7 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: >-
-            APK_PATH=$(ls android/app/build/outputs/apk/lightningLite/release/*.apk | head -1);
+            APK_PATH=$(ls android/app/build/outputs/apk/lightningLite/debug/*.apk | head -1);
             echo "APK=$APK_PATH";
             adb install -r "$APK_PATH";
             adb shell pm list packages | grep barebones;

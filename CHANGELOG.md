@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-15
+
+### Added
+
+- "Ygg Diagnostics" launcher entry: opens the network/diagnostics screen
+  directly, so crash logs can be read even if the browser fails to start
+- Device info (model, Android, WebView version, ABIs) in diagnostics
+- Lite flavor launcher icons now use the Ygg Browser icon
+
 ## [0.1.1] - 2026-11-15
 
 ### Added
@@ -54,6 +63,7 @@ First public release.
   yggstack nodes, SOCKS5 fetch via raw address and `.pk.ygg`), release
   packaging for Windows, Linux and Android
 
-[Unreleased]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/KeyspaceDecay/ygg-browser/releases/tag/v0.1.0

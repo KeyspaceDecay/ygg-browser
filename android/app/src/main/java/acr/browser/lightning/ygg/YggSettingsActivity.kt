@@ -142,9 +142,19 @@ class YggSettingsActivity : AppCompatActivity() {
     }
 
     private fun setupDiagnostics() {
-        crashView.text = latestCrashLog() ?: getString(R.string.ygg_crash_empty)
+        crashView.text = buildString {
+            appendLine("device: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} (${android.os.Build.DEVICE})")
+            appendLine("android: ${android.os.Build.VERSION.RELEASE} (SDK ${android.os.Build.VERSION.SDK_INT})")
+            runCatching {
+                val wv = android.webkit.WebView.getCurrentWebViewPackage()
+                appendLine("webview: ${wv?.versionName}")
+            }
+            appendLine("cpu: ${android.os.Build.SUPPORTED_ABIS?.joinToString(",")}")
+            appendLine("---")
+            append(latestCrashLog() ?: getString(R.string.ygg_crash_empty))
+        }
         shareCrashButton.setOnClickListener {
-            val text = latestCrashLog() ?: return@setOnClickListener
+            val text = crashView.text.toString()
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
                 putExtra(Intent.EXTRA_TEXT, text)
