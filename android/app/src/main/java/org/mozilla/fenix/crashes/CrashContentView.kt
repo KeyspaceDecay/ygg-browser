@@ -4,33 +4,36 @@
 
 package org.mozilla.fenix.crashes
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.view.View
 import androidx.annotation.VisibleForTesting
 import androidx.constraintlayout.widget.ConstraintLayout
 import org.mozilla.fenix.R
+import org.mozilla.fenix.crashes.CrashContentView.Companion.TAP_INCREASE_DP
 import org.mozilla.fenix.databinding.ViewCrashReporterBinding
 import org.mozilla.fenix.ext.increaseTapArea
 
 /**
- * View shown when a tab crashes. Intended to entirely overlay an EngineView.
- * This will allow users to close or restore the current tab while optionally
- * send all reports for non-fatal crashes or dismiss them.
+ * View shown when a tab crashes. Intended to entirely overlay an EngineView. This will allow users to close or restore
+ * the current tab while optionally send all reports for non-fatal crashes or dismiss them.
  */
-class CrashContentView @JvmOverloads constructor(
+class CrashContentView
+@JvmOverloads
+constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0,
 ) : ConstraintLayout(context, attrs, defStyleAttr) {
-    @VisibleForTesting
-    internal lateinit var binding: ViewCrashReporterBinding
+    @VisibleForTesting internal lateinit var binding: ViewCrashReporterBinding
 
-    @VisibleForTesting val isBindingInitialized
+    @VisibleForTesting
+    val isBindingInitialized
         get() = ::binding.isInitialized
 
-    @VisibleForTesting
-    internal lateinit var controller: CrashReporterController
+    @VisibleForTesting internal lateinit var controller: CrashReporterController
 
     /**
      * Inflate if necessary and show this `View`.
@@ -40,12 +43,13 @@ class CrashContentView @JvmOverloads constructor(
     fun show(controller: CrashReporterController) {
         this.controller = controller
         inflateViewIfNecessary()
+        // Update the checkbox state on every show(), so that the preference does not
+        // go stale for multiple crashes in the same session.
+        bindCheckboxState()
         visibility = VISIBLE
     }
 
-    /**
-     * Remove this View from layout.
-     */
+    /** Remove this View from layout. */
     fun hide() {
         visibility = GONE
     }
@@ -60,6 +64,9 @@ class CrashContentView @JvmOverloads constructor(
         bindViews()
     }
 
+    // Inflating a merge would bind against this view rather than a root of its own, and the tests hand it a
+    // spy of itself with nothing to find. It inflates once, when a tab crashes, so it is not worth that.
+    @SuppressLint("MozConstraintLayoutInflatesConstraintLayout")
     @VisibleForTesting
     internal fun inflate() {
         binding = ViewCrashReporterBinding.inflate(LayoutInflater.from(context), this, true)
@@ -67,26 +74,39 @@ class CrashContentView @JvmOverloads constructor(
 
     @VisibleForTesting
     internal fun bindViews() {
-        binding.title.text =
-            context.getString(R.string.tab_crash_title_2, context.getString(R.string.app_name))
+        binding.title.text = context.getString(R.string.tab_crash_title_2, context.getString(R.string.app_name))
 
         binding.restoreTabButton.apply {
-            increaseTapArea(TAP_INCREASE_DP)
+            increaseTapArea(this)
             setOnClickListener {
                 controller.handleCloseAndRestore(binding.sendCrashCheckbox.isChecked)
             }
         }
 
         binding.closeTabButton.apply {
-            increaseTapArea(TAP_INCREASE_DP)
+            increaseTapArea(this)
             setOnClickListener {
                 controller.handleCloseAndRemove(binding.sendCrashCheckbox.isChecked)
             }
         }
     }
 
+    private fun bindCheckboxState() {
+        binding.sendCrashCheckbox.apply {
+            visibility = if (controller.isCrashReportCheckboxVisible()) VISIBLE else GONE
+            isChecked = controller.isCrashReportCheckboxInitiallyChecked()
+        }
+    }
+
+    /**
+     * Increases the tap area of the current view by a predefined amount. This amount is defined by [TAP_INCREASE_DP].
+     */
+    @VisibleForTesting
+    internal fun increaseTapArea(view: View) {
+        view.increaseTapArea(TAP_INCREASE_DP)
+    }
+
     companion object {
-        @VisibleForTesting
-        internal const val TAP_INCREASE_DP = 12
+        @VisibleForTesting internal const val TAP_INCREASE_DP = 12
     }
 }

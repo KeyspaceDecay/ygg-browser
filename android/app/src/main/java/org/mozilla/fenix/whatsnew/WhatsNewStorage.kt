@@ -6,20 +6,24 @@ package org.mozilla.fenix.whatsnew
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import java.util.concurrent.TimeUnit
 
 // This file is a modified port from Focus Android
 
-/**
- * Interface to abstract where the cached version and session counter is stored
- */
+/** Interface to abstract where the cached version and session counter is stored */
 interface WhatsNewStorage {
     fun getVersion(): WhatsNewVersion?
+
     fun setVersion(version: WhatsNewVersion)
+
     fun getWhatsNewHasBeenCleared(): Boolean
+
     fun setWhatsNewHasBeenCleared(cleared: Boolean)
+
     fun getDaysSinceUpdate(): Long
+
     fun setDateOfUpdate(day: Long)
 
     companion object {
@@ -29,8 +33,10 @@ interface WhatsNewStorage {
     }
 }
 
-class SharedPreferenceWhatsNewStorage(private val sharedPreference: SharedPreferences) :
-    WhatsNewStorage {
+class SharedPreferenceWhatsNewStorage(
+    private val sharedPreference: SharedPreferences,
+    private val currentTimeMillis: () -> Long = { System.currentTimeMillis() },
+) : WhatsNewStorage {
 
     constructor(context: Context) : this(PreferenceManager.getDefaultSharedPreferences(context))
 
@@ -41,9 +47,7 @@ class SharedPreferenceWhatsNewStorage(private val sharedPreference: SharedPrefer
     }
 
     override fun setVersion(version: WhatsNewVersion) {
-        sharedPreference.edit()
-            .putString(WhatsNewStorage.PREFERENCE_KEY_APP_NAME, version.version)
-            .apply()
+        sharedPreference.edit { putString(WhatsNewStorage.PREFERENCE_KEY_APP_NAME, version.version) }
     }
 
     override fun getWhatsNewHasBeenCleared(): Boolean {
@@ -51,19 +55,15 @@ class SharedPreferenceWhatsNewStorage(private val sharedPreference: SharedPrefer
     }
 
     override fun setWhatsNewHasBeenCleared(cleared: Boolean) {
-        sharedPreference.edit()
-            .putBoolean(WhatsNewStorage.PREFERENCE_KEY_WHATS_NEW_CLEARED, cleared)
-            .apply()
+        sharedPreference.edit { putBoolean(WhatsNewStorage.PREFERENCE_KEY_WHATS_NEW_CLEARED, cleared) }
     }
 
     override fun getDaysSinceUpdate(): Long {
         val updateDay = sharedPreference.getLong(WhatsNewStorage.PREFERENCE_KEY_UPDATE_DAY, 0)
-        return TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - updateDay)
+        return TimeUnit.MILLISECONDS.toDays(currentTimeMillis() - updateDay)
     }
 
     override fun setDateOfUpdate(day: Long) {
-        sharedPreference.edit()
-            .putLong(WhatsNewStorage.PREFERENCE_KEY_UPDATE_DAY, day)
-            .apply()
+        sharedPreference.edit { putLong(WhatsNewStorage.PREFERENCE_KEY_UPDATE_DAY, day) }
     }
 }

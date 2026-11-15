@@ -9,6 +9,7 @@ import android.net.ConnectivityManager
 import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
+import kotlin.collections.removeFirst as removeFirstKt
 import mozilla.components.support.test.robolectric.testContext
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -16,10 +17,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mozilla.fenix.helpers.FenixRobolectricTestRunner
 import org.mozilla.fenix.utils.Settings
+import org.robolectric.RobolectricTestRunner
 
-@RunWith(FenixRobolectricTestRunner::class)
+@RunWith(RobolectricTestRunner::class)
 class WifiConnectionMonitorTest {
     lateinit var settings: Settings
     lateinit var connectivityManager: ConnectivityManager
@@ -77,9 +78,7 @@ class WifiConnectionMonitorTest {
         wifiConnectionMonitor.stop()
 
         verify {
-            wifiConnectionMonitor.connectivityManager.unregisterNetworkCallback(
-                wifiConnectionMonitor.frameworkListener,
-            )
+            wifiConnectionMonitor.connectivityManager.unregisterNetworkCallback(wifiConnectionMonitor.frameworkListener)
         }
 
         assertFalse(wifiConnectionMonitor.isRegistered)
@@ -179,7 +178,7 @@ class WifiConnectionMonitorTest {
             wifiConnectionMonitor.addOnWifiConnectedChangedListener {
                 // Altering callbacks while looping.
                 if (wifiConnectionMonitor.callbacks.isNotEmpty()) {
-                    wifiConnectionMonitor.callbacks.removeFirst()
+                    wifiConnectionMonitor.callbacks.removeFirstKt()
                 }
             }
 

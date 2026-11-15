@@ -5,6 +5,7 @@
 package org.mozilla.fenix.wallpapers
 
 import android.graphics.Bitmap
+import android.util.Size
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -12,20 +13,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Icon
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
+import mozilla.components.ui.icons.R as iconsR
 import org.mozilla.fenix.R
 import org.mozilla.fenix.settings.wallpaper.WallpaperThumbnails
 import org.mozilla.fenix.theme.FirefoxTheme
@@ -40,39 +42,36 @@ import org.mozilla.fenix.theme.FirefoxTheme
  * @param onExploreMoreButtonClicked Callback for when the bottom text button is clicked.
  * @param onSelectWallpaper Callback for when a new wallpaper is selected.
  */
-@ExperimentalMaterialApi
 @Composable
 fun WallpaperOnboarding(
     wallpapers: List<Wallpaper>,
     currentWallpaper: Wallpaper,
-    loadWallpaperResource: suspend (Wallpaper) -> Bitmap?,
+    loadWallpaperResource: suspend (Wallpaper, Size) -> Bitmap?,
     onCloseClicked: () -> Unit,
     onExploreMoreButtonClicked: () -> Unit,
     onSelectWallpaper: (Wallpaper) -> Unit,
 ) {
     Surface(
-        color = FirefoxTheme.colors.layer2,
-        shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
+        shape =
+            MaterialTheme.shapes.large.copy(
+                bottomStart = CornerSize(0.dp),
+                bottomEnd = CornerSize(0.dp),
+            )
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Icon(
-                painter = painterResource(id = R.drawable.mozac_ic_cross_24),
+                painter = painterResource(id = iconsR.drawable.mozac_ic_cross_24),
                 contentDescription = stringResource(id = R.string.close_tab),
-                tint = FirefoxTheme.colors.iconPrimary,
-                modifier = Modifier
-                    .clickable { onCloseClicked() }
-                    .size(24.dp)
-                    .align(Alignment.End),
+                modifier = Modifier.clickable { onCloseClicked() }.size(24.dp).align(Alignment.End),
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
                 text = stringResource(R.string.wallpapers_onboarding_dialog_title_text),
-                color = FirefoxTheme.colors.textPrimary,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
                 style = FirefoxTheme.typography.headline7,
@@ -82,7 +81,7 @@ fun WallpaperOnboarding(
 
             Text(
                 text = stringResource(R.string.wallpapers_onboarding_dialog_body_text),
-                color = FirefoxTheme.colors.textSecondary,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 overflow = TextOverflow.Ellipsis,
                 maxLines = 1,
                 style = FirefoxTheme.typography.caption,
@@ -92,23 +91,20 @@ fun WallpaperOnboarding(
 
             WallpaperThumbnails(
                 wallpapers = wallpapers,
-                defaultWallpaper = Wallpaper.Default,
                 selectedWallpaper = currentWallpaper,
-                loadWallpaperResource = { loadWallpaperResource(it) },
+                loadWallpaperResource = { wallpaper, size -> loadWallpaperResource(wallpaper, size) },
                 onSelectWallpaper = { onSelectWallpaper(it) },
             )
 
             Spacer(modifier = Modifier.height(16.dp))
 
             TextButton(
-                modifier = Modifier
-                    .align(Alignment.CenterHorizontally)
-                    .fillMaxWidth(),
+                modifier = Modifier.align(Alignment.CenterHorizontally).fillMaxWidth(),
                 onClick = { onExploreMoreButtonClicked() },
             ) {
                 Text(
                     text = stringResource(R.string.wallpapers_onboarding_dialog_explore_more_button_text),
-                    color = FirefoxTheme.colors.textAccent,
+                    color = MaterialTheme.colorScheme.tertiary,
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 1,
                     style = FirefoxTheme.typography.button,
@@ -118,8 +114,7 @@ fun WallpaperOnboarding(
     }
 }
 
-@Preview
-@ExperimentalMaterialApi
+@PreviewLightDark
 @Composable
 private fun WallpaperSnackbarPreview() {
     FirefoxTheme {
@@ -128,7 +123,7 @@ private fun WallpaperSnackbarPreview() {
             currentWallpaper = Wallpaper.Default,
             onCloseClicked = {},
             onExploreMoreButtonClicked = {},
-            loadWallpaperResource = { null },
+            loadWallpaperResource = { _, _ -> null },
             onSelectWallpaper = {},
         )
     }

@@ -5,8 +5,9 @@
 package org.mozilla.fenix.components.metrics
 
 import android.content.Context
-import mozilla.components.service.glean.Glean
 import mozilla.components.support.base.log.logger.Logger
+import mozilla.components.support.utils.RunWhenReadyQueue
+import mozilla.telemetry.glean.Glean
 import org.mozilla.fenix.GleanMetrics.Pings
 import org.mozilla.fenix.ext.components
 
@@ -15,9 +16,7 @@ private class EventWrapper<T : Enum<T>>(
     private val keyMapper: ((String) -> T)? = null,
 ) {
 
-    /**
-     * Converts snake_case string to camelCase.
-     */
+    /** Converts snake_case string to camelCase. */
     private fun String.asCamelCase(): String {
         val parts = split("_")
         val builder = StringBuilder()
@@ -35,13 +34,14 @@ private class EventWrapper<T : Enum<T>>(
     }
 
     fun track(event: Event) {
-        val extras = if (keyMapper != null) {
-            event.extras?.mapKeys { (key) ->
-                keyMapper.invoke(key.toString().asCamelCase())
+        val extras =
+            if (keyMapper != null) {
+                event.extras?.mapKeys { (key) ->
+                    keyMapper.invoke(key.toString().asCamelCase())
+                }
+            } else {
+                null
             }
-        } else {
-            null
-        }
 
         @Suppress("DEPRECATION")
         // FIXME(#19967): Migrate to non-deprecated API.
@@ -54,11 +54,10 @@ private class EventWrapper<T : Enum<T>>(
 private val Event.wrapper: EventWrapper<*>?
     get() = null
 
-/**
- * Service responsible for sending the activation and installation pings.
- */
+/** Service responsible for sending the activation and installation pings. */
 class GleanMetricsService(
     private val context: Context,
+    private val runWhenReadyQueue: RunWhenReadyQueue = context.components.performance.visualCompletenessQueue,
 ) : MetricsService {
     override val type = MetricServiceType.Data
 
@@ -70,14 +69,14 @@ class GleanMetricsService(
     override fun start() {
         logger.debug("Enabling Glean.")
         // Initialization of Glean already happened in FenixApplication.
-        Glean.setUploadEnabled(true)
+        Glean.setCollectionEnabled(true)
 
         if (initialized) return
         initialized = true
 
         // The code below doesn't need to execute immediately, so we'll add them to the visual
         // completeness task queue to be run later.
-        context.components.performance.visualCompletenessQueue.queue.runIfReadyOrQueue {
+        runWhenReadyQueue.runIfReadyOrQueue {
             // We have to initialize Glean *on* the main thread, because it registers lifecycle
             // observers. However, the activation ping must be sent *off* of the main thread,
             // because it calls Google ad APIs that must be called *off* of the main thread.
@@ -90,7 +89,7 @@ class GleanMetricsService(
     }
 
     override fun stop() {
-        Glean.setUploadEnabled(false)
+        Glean.setCollectionEnabled(false)
     }
 
     override fun track(event: Event) {

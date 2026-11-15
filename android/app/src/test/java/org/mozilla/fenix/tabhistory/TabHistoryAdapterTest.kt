@@ -22,29 +22,30 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.R
 import org.mozilla.fenix.ext.components
-import org.mozilla.fenix.helpers.FenixRobolectricTestRunner
+import org.robolectric.RobolectricTestRunner
 
-@RunWith(FenixRobolectricTestRunner::class)
+@RunWith(RobolectricTestRunner::class)
 class TabHistoryAdapterTest {
 
-    @MockK
-    private lateinit var interactor: TabHistoryInteractor
+    @MockK private lateinit var interactor: TabHistoryInteractor
     private lateinit var context: Context
     private lateinit var parent: FrameLayout
     private lateinit var adapter: TabHistoryAdapter
 
-    private val selectedItem = TabHistoryItem(
-        title = "Mozilla",
-        url = "https://mozilla.org",
-        index = 0,
-        isSelected = true,
-    )
-    private val unselectedItem = TabHistoryItem(
-        title = "Firefox",
-        url = "https://firefox.com",
-        index = 1,
-        isSelected = false,
-    )
+    private val selectedItem =
+        TabHistoryItem(
+            title = "Mozilla",
+            url = "https://mozilla.org",
+            index = 0,
+            isSelected = true,
+        )
+    private val unselectedItem =
+        TabHistoryItem(
+            title = "Firefox",
+            url = "https://firefox.com",
+            index = 1,
+            isSelected = false,
+        )
 
     @Before
     fun setup() {
@@ -56,7 +57,11 @@ class TabHistoryAdapterTest {
 
     @Test
     fun `creates and binds view holder`() {
-        every { testContext.components.core.icons } returns BrowserIcons(testContext, mockk(relaxed = true))
+        every { testContext.components.core.icons } returns
+            BrowserIcons(
+                testContext,
+                mockk(relaxed = true),
+            )
         adapter.submitList(listOf(selectedItem, unselectedItem))
 
         val holder = spyk(adapter.createViewHolder(parent, 0))
@@ -74,19 +79,19 @@ class TabHistoryAdapterTest {
             TabHistoryAdapter.DiffCallback.areItemsTheSame(
                 selectedItem,
                 selectedItem,
-            ),
+            )
         )
         assertTrue(
             TabHistoryAdapter.DiffCallback.areItemsTheSame(
                 unselectedItem,
                 unselectedItem.copy(title = "Waterbug", index = 2, isSelected = true),
-            ),
+            )
         )
         assertFalse(
             TabHistoryAdapter.DiffCallback.areItemsTheSame(
                 unselectedItem,
                 unselectedItem.copy(url = "https://firefox.com/subpage"),
-            ),
+            )
         )
     }
 
@@ -96,19 +101,19 @@ class TabHistoryAdapterTest {
             TabHistoryAdapter.DiffCallback.areContentsTheSame(
                 selectedItem,
                 selectedItem,
-            ),
+            )
         )
         assertFalse(
             TabHistoryAdapter.DiffCallback.areContentsTheSame(
                 selectedItem,
                 selectedItem.copy(title = "Waterbug", index = 2, isSelected = false),
-            ),
+            )
         )
         assertFalse(
             TabHistoryAdapter.DiffCallback.areContentsTheSame(
                 unselectedItem,
                 selectedItem,
-            ),
+            )
         )
     }
 }

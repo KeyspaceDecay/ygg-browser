@@ -6,14 +6,16 @@ package org.mozilla.fenix.ext
 
 import android.text.Editable
 import androidx.compose.runtime.Composable
-import mozilla.components.support.ktx.kotlin.MAX_URI_LENGTH
+import mozilla.components.compose.base.utils.inComposePreview
+import mozilla.components.lib.publicsuffixlist.PublicSuffixList
+import mozilla.components.support.base.utils.MAX_URI_LENGTH
 import mozilla.components.support.ktx.kotlin.toShortUrl
+import mozilla.components.support.ktx.kotlin.tryGetHostFromUrl
 import org.mozilla.fenix.components.components
-import org.mozilla.fenix.compose.inComposePreview
 
 /**
- * Shortens URLs to be more user friendly, by applying [String.toShortUrl]
- * and making sure it's equal or below the [MAX_URI_LENGTH].
+ * Shortens URLs to be more user friendly, by applying [String.toShortUrl] and making sure it's equal or below the
+ * [MAX_URI_LENGTH].
  */
 @Composable
 fun String.toShortUrl(): String {
@@ -25,17 +27,15 @@ fun String.toShortUrl(): String {
     return if (inComposePreview) {
         this.take(MAX_URI_LENGTH)
     } else {
-        this.toShortUrl(components.publicSuffixList)
-            .take(MAX_URI_LENGTH)
+        this.toShortUrl(components.publicSuffixList).take(MAX_URI_LENGTH)
     }
 }
 
 /**
  * Trims a URL string of its scheme and common prefixes.
  *
- * This is intended to act much like [PublicSuffixList.getPublicSuffixPlusOne()] but unlike
- * that method, leaves the path, anchor, etc intact.
- *
+ * This is intended to act much like [PublicSuffixList.getPublicSuffixPlusOne()] but unlike that method, leaves the
+ * path, anchor, etc intact.
  */
 fun String.simplifiedUrl(): String {
     val afterScheme = this.substringAfter("://")
@@ -47,13 +47,29 @@ fun String.simplifiedUrl(): String {
     return afterScheme
 }
 
-/**
- * Returns an [Editable] for the provided string.
- */
+/** Returns an [Editable] for the provided string. */
 fun String.toEditable(): Editable = Editable.Factory.getInstance().newEditable(this)
 
+/** Returns a Ipv6 address with consecutive sections of zeroes replaced with a double colon. */
+fun String?.replaceConsecutiveZeros(): String? = this?.replaceFirst(":0", ":")?.replace(":0", "")
+
 /**
- * Returns a Ipv6 address with consecutive sections of zeroes replaced with a double colon.
+ * Extracts a shortened or simplified URL from a given URL string. (e.g., "example.com" instead of
+ * "https://www.example.com/long/path/to/file")
+ *
+ * This function handles both regular URLs and blob URLs. For regular URLs, it extracts the base domain. For blob URLs,
+ * it extracts the base domain from the URL embedded within the blob URL.
+ *
+ * @param publicSuffixList The [PublicSuffixList] used to resolve the registrable domain.
+ * @return The registrable domain (e.g., "mozilla.org") or the host if a registrable domain cannot be determined.
  */
-fun String?.replaceConsecutiveZeros(): String? =
-    this?.replaceFirst(":0", ":")?.replace(":0", "")
+internal suspend fun String.getBaseDomainUrl(publicSuffixList: PublicSuffixList): String {
+    val host =
+        when {
+            this.startsWith("blob:") -> this.substringAfter("blob:").tryGetHostFromUrl()
+            else -> this.tryGetHostFromUrl()
+        }
+    val registrableDomain = publicSuffixList.getPublicSuffixPlusOne(host).await()
+
+    return registrableDomain ?: host
+}

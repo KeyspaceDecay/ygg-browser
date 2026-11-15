@@ -8,30 +8,42 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import mozilla.components.browser.state.action.WebExtensionAction
 import mozilla.components.concept.engine.EngineSession
 import mozilla.components.concept.engine.EngineView
+import mozilla.components.feature.accounts.push.SendTabUseCases
 import mozilla.components.lib.state.ext.consumeFrom
+import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
 import org.mozilla.fenix.R
 import org.mozilla.fenix.databinding.FragmentAddOnInternalSettingsBinding
+import org.mozilla.fenix.e2e.SystemInsetsPaddedFragment
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.showToolbar
+import org.mozilla.fenix.snackbar.FenixSnackbarDelegate
+import org.mozilla.fenix.snackbar.SnackbarBinding
 
-/**
- * A fragment to show the web extension action popup with [EngineView].
- */
-class WebExtensionActionPopupFragment : AddonPopupBaseFragment(), EngineSession.Observer {
+/** A fragment to show the web extension action popup with [EngineView]. */
+class WebExtensionActionPopupFragment : AddonPopupBaseFragment(), EngineSession.Observer, SystemInsetsPaddedFragment {
 
     private val args by navArgs<WebExtensionActionPopupFragmentArgs>()
     private val coreComponents by lazy { requireComponents.core }
-    private val safeArguments get() = requireNotNull(arguments)
+    private val safeArguments
+        get() = requireNotNull(arguments)
+
     private var sessionConsumed
         get() = safeArguments.getBoolean("isSessionConsumed", false)
         set(value) {
             safeArguments.putBoolean("isSessionConsumed", value)
         }
+
+    private val snackbarBinding = ViewBoundFeatureWrapper<SnackbarBinding>()
+
+    private var _binding: FragmentAddOnInternalSettingsBinding? = null
+    internal val binding
+        get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,7 +67,7 @@ class WebExtensionActionPopupFragment : AddonPopupBaseFragment(), EngineSession.
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val binding = FragmentAddOnInternalSettingsBinding.bind(view)
+        _binding = FragmentAddOnInternalSettingsBinding.bind(view)
 
         val session = engineSession
         // If we have the session, render it otherwise consume it from the store.
@@ -80,11 +92,37 @@ class WebExtensionActionPopupFragment : AddonPopupBaseFragment(), EngineSession.
                 }
             }
         }
+
+        snackbarBinding.set(
+            feature =
+                SnackbarBinding(
+                    context = requireContext(),
+                    browserStore = requireComponents.core.store,
+                    appStore = requireComponents.appStore,
+                    snackbarDelegate = FenixSnackbarDelegate(provideDynamicSnackbarContainer()),
+                    navController = findNavController(),
+                    tabsUseCases = requireComponents.useCases.tabsUseCases,
+                    sendTabUseCases = SendTabUseCases(requireComponents.backgroundServices.accountManager),
+                    customTabSessionId = null,
+                    applicationScope = requireComponents.applicationScope,
+                ),
+            owner = this,
+            view = view,
+        )
+    }
+
+    override fun provideDynamicSnackbarContainer(): ConstraintLayout {
+        return binding.dynamicSnackbarContainer
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 
     private fun consumePopupSession() {
         coreComponents.store.dispatch(
-            WebExtensionAction.UpdatePopupSessionAction(args.webExtensionId, popupSession = null),
+            WebExtensionAction.UpdatePopupSessionAction(args.webExtensionId, popupSession = null)
         )
         sessionConsumed = true
     }

@@ -30,16 +30,16 @@ import org.mozilla.fenix.FenixApplication
 import org.mozilla.fenix.HomeActivity.Companion.OPEN_TO_BROWSER_AND_LOAD
 import org.mozilla.fenix.IntentReceiverActivity
 import org.mozilla.fenix.ext.components
-import org.mozilla.fenix.helpers.FenixRobolectricTestRunner
 import org.mozilla.fenix.helpers.perf.TestStrictModeManager
 import org.mozilla.fenix.widget.VoiceSearchActivity.Companion.PREVIOUS_INTENT
 import org.mozilla.fenix.widget.VoiceSearchActivity.Companion.SPEECH_PROCESSING
 import org.robolectric.Robolectric
+import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ActivityController
 import org.robolectric.shadows.ShadowActivity
 
-@RunWith(FenixRobolectricTestRunner::class)
+@RunWith(RobolectricTestRunner::class)
 class VoiceSearchActivityTest {
 
     private lateinit var controller: ActivityController<VoiceSearchActivity>
@@ -110,28 +110,30 @@ class VoiceSearchActivityTest {
     @Test
     fun `save previous intent to instance state`() {
         allowVoiceIntentToResolveActivity()
-        val previousIntent = Intent().apply {
-            putExtra(SPEECH_PROCESSING, true)
-        }
-        val savedInstanceState = Bundle().apply {
-            putParcelable(PREVIOUS_INTENT, previousIntent)
-        }
+        val previousIntent =
+            Intent().apply {
+                putExtra(SPEECH_PROCESSING, true)
+            }
+        val savedInstanceState =
+            Bundle().apply {
+                putParcelable(PREVIOUS_INTENT, previousIntent)
+            }
         val outState = Bundle()
 
         controller.create(savedInstanceState)
         controller.saveInstanceState(outState)
 
-        @Suppress("DEPRECATION")
-        assertEquals(previousIntent, outState.getParcelable<Intent>(PREVIOUS_INTENT))
+        @Suppress("DEPRECATION") assertEquals(previousIntent, outState.getParcelable<Intent>(PREVIOUS_INTENT))
     }
 
     @Test
     fun `process intent with speech processing in previous intent set to true`() {
         allowVoiceIntentToResolveActivity()
         val savedInstanceState = Bundle()
-        val previousIntent = Intent().apply {
-            putExtra(SPEECH_PROCESSING, true)
-        }
+        val previousIntent =
+            Intent().apply {
+                putExtra(SPEECH_PROCESSING, true)
+            }
         savedInstanceState.putParcelable(PREVIOUS_INTENT, previousIntent)
 
         controller.create(savedInstanceState)
@@ -153,9 +155,10 @@ class VoiceSearchActivityTest {
         allowVoiceIntentToResolveActivity()
         controller.create()
 
-        val resultIntent = Intent().apply {
-            putStringArrayListExtra(EXTRA_RESULTS, arrayListOf("hello world"))
-        }
+        val resultIntent =
+            Intent().apply {
+                putStringArrayListExtra(EXTRA_RESULTS, arrayListOf("hello world"))
+            }
         val result = ActivityResult(RESULT_OK, resultIntent)
         activity.handleActivityResult(result)
 

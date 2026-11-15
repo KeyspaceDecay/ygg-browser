@@ -1,7 +1,19 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+import argparse
 import subprocess
 from pathlib import Path
 
 import yaml
+
+parser = argparse.ArgumentParser("Options for android apk downloader")
+
+parser.add_argument(
+    "--test-files", nargs="+", help="List of test files to generate tests from"
+)
+args = parser.parse_args()
 
 
 def search_for_smoke_tests(tests_name):
@@ -17,20 +29,20 @@ def search_for_smoke_tests(tests_name):
             file_name = name
             break
 
-    with open(file_name, "r") as file:
+    with open(file_name) as file:
         code = file.read().split(" ")
         code = [item for item in code if item != ""]
 
+        #  Gets the class name from the path e.g.: .ui/HomescreenTest.kt
+        class_name = f"{file_name.name.strip('kt').strip('.').split('/')[-1]}"
+
+        #  This is a custom annotation found in fenix/customannotations/SmokeTest.kt
         for count, item in enumerate(code):
-            if "class" in item or "@SmokeTest" in item:
+            if "@SmokeTest" in item:
                 locations.append(count)
 
         for location in locations:
-            if len(test_names) == 0:
-                class_name = code[location + 1]
-                test_names.append(class_name)
-            else:
-                test_names.append(f"{class_name}#{code[location+3].strip('()')}")
+            test_names.append(f"{class_name}#{code[location + 3].strip('()')}")
     return test_names
 
 
@@ -45,7 +57,7 @@ def create_test_file():
         print("File Exists, you need to delete it to create a new one.")
         return
     # file exists
-    subprocess.run([f"touch {final_path}"], encoding="utf8", shell=True)
+    subprocess.run([f"touch {final_path}"], check=True, encoding="utf8", shell=True)
     assert final_path.exists()
     with open(final_path, "w") as file:
         file.write("import pytest\n\n")
@@ -61,10 +73,10 @@ def generate_smoke_tests(tests_names=None):
         tests.append(
             f"""
 @pytest.mark.smoke_test
-def test_smoke_{test_name}(setup_experiment, gradlewbuild, load_branches, check_ping_for_experiment):
-    setup_experiment(load_branches)
+def test_smoke_{test_name}(setup_experiment, gradlewbuild, open_app):
+    setup_experiment()
+    open_app()
     gradlewbuild.test("{test}", smoke=True)
-    assert check_ping_for_experiment
 """
         )
     with open(pytest_file, "a") as file:
@@ -73,10 +85,16 @@ def test_smoke_{test_name}(setup_experiment, gradlewbuild, load_branches, check_
 
 
 if __name__ == "__main__":
-    test_modules = None
+    test_modules = []
+    args = parser.parse_args()
+    if args.test_files:
+        test_modules = args.test_files
+    else:
+        with open("variables.yaml") as file:
+            tests = yaml.safe_load(file)
+            test_modules = [test for test in tests.get("smoke_tests")]
     create_test_file()
-    with open("variables.yaml", "r") as file:
-        test_modules = yaml.safe_load(file)
-    for item in test_modules.get("smoke_tests"):
+    print(f"Created tests for modules: {test_modules}")
+    for item in test_modules:
         tests = search_for_smoke_tests(item)
         generate_smoke_tests(tests)

@@ -10,17 +10,17 @@ import io.mockk.Called
 import io.mockk.mockk
 import io.mockk.verify
 import mozilla.components.support.test.robolectric.testContext
+import mozilla.components.ui.icons.R as iconsR
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mozilla.fenix.R
 import org.mozilla.fenix.databinding.AppShareListItemBinding
-import org.mozilla.fenix.helpers.FenixRobolectricTestRunner
 import org.mozilla.fenix.share.ShareToAppsInteractor
 import org.mozilla.fenix.share.listadapters.AppShareOption
+import org.robolectric.RobolectricTestRunner
 
-@RunWith(FenixRobolectricTestRunner::class)
+@RunWith(RobolectricTestRunner::class)
 class AppViewHolderTest {
 
     private lateinit var binding: AppShareListItemBinding
@@ -37,26 +37,28 @@ class AppViewHolderTest {
 
     @Test
     fun `bind app share option`() {
-        val app = AppShareOption(
-            name = "Pocket",
-            icon = getDrawable(testContext, R.drawable.ic_pocket)!!,
-            packageName = "com.mozilla.pocket",
-            activityName = "MainActivity",
-        )
+        val app =
+            AppShareOption(
+                name = "Focus",
+                icon = getDrawable(testContext, iconsR.drawable.mozac_ic_logo_firefox_24)!!,
+                packageName = "com.mozilla.focus",
+                activityName = "MainActivity",
+            )
         viewHolder.bind(app)
 
-        assertEquals("Pocket", binding.appName.text)
+        assertEquals("Focus", binding.appName.text)
         assertEquals(app.icon, binding.appIcon.drawable)
     }
 
     @Test
     fun `trigger interactor if application is bound`() {
-        val app = AppShareOption(
-            name = "Pocket",
-            icon = getDrawable(testContext, R.drawable.ic_pocket)!!,
-            packageName = "com.mozilla.pocket",
-            activityName = "MainActivity",
-        )
+        val app =
+            AppShareOption(
+                name = "Focus",
+                icon = getDrawable(testContext, iconsR.drawable.mozac_ic_logo_firefox_24)!!,
+                packageName = "com.mozilla.focus",
+                activityName = "MainActivity",
+            )
 
         viewHolder.itemView.performClick()
         verify { interactor wasNot Called }

@@ -6,7 +6,11 @@ package org.mozilla.fenix.components.metrics
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Base64
 import androidx.annotation.VisibleForTesting
+import androidx.core.content.edit
+import com.google.android.gms.ads.identifier.AdvertisingIdClient
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -15,7 +19,10 @@ import org.mozilla.fenix.GleanMetrics.Activation
 import org.mozilla.fenix.GleanMetrics.Pings
 import org.mozilla.fenix.components.metrics.MetricsUtils.getHashedIdentifier
 
-class ActivationPing(private val context: Context) {
+class ActivationPing(
+    private val context: Context,
+    private val backgroundDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) {
     private val prefs: SharedPreferences by lazy {
         context.getSharedPreferences(
             "${this.javaClass.canonicalName}.prefs",
@@ -24,12 +31,10 @@ class ActivationPing(private val context: Context) {
     }
 
     /**
-     * Checks whether or not the activation ping was already
-     * triggered by the application.
+     * Checks whether or not the activation ping was already triggered by the application.
      *
-     * Note that this only tells us that Fenix triggered the
-     * ping and then delegated the transmission to Glean. We
-     * have no way to tell if it was actually sent or not.
+     * Note that this only tells us that Fenix triggered the ping and then delegated the transmission to Glean. We have
+     * no way to tell if it was actually sent or not.
      *
      * @return true if it was already triggered, false otherwise.
      */
@@ -39,26 +44,26 @@ class ActivationPing(private val context: Context) {
     }
 
     /**
-     * Marks the "activation" ping as triggered by the application.
-     * This ensures the ping is not triggered again at the next app
-     * start.
+     * Marks the "activation" ping as triggered by the application. This ensures the ping is not triggered again at the
+     * next app start.
      */
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     internal fun markAsTriggered() {
-        prefs.edit().putBoolean("ping_sent", true).apply()
+        prefs.edit { putBoolean("ping_sent", true) }
     }
 
-    /**
-     * Fills the metrics and triggers the 'activation' ping.
-     * This is a separate function to simplify unit-testing.
-     */
+    /** Fills the metrics and triggers the 'activation' ping. This is a separate function to simplify unit-testing. */
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     internal fun triggerPing() {
         // Generate the activation_id.
         Activation.activationId.generateAndSet()
 
-        CoroutineScope(Dispatchers.IO).launch {
-            val hashedId = getHashedIdentifier(context)
+        CoroutineScope(backgroundDispatcher).launch {
+            val hashedId =
+                getHashedIdentifier(
+                    retrieveAdvertisingIdInfo = { AdvertisingIdClient.getAdvertisingIdInfo(context).id },
+                    encodeToString = Base64::encodeToString,
+                )
             if (hashedId != null) {
                 Logger.info("ActivationPing - generating ping with the hashed id")
                 // We have a valid, hashed Google Advertising ID.
@@ -72,9 +77,8 @@ class ActivationPing(private val context: Context) {
     }
 
     /**
-     * Trigger sending the `activation` ping if it wasn't sent already.
-     * Then, mark it so that it doesn't get triggered next time Fenix
-     * starts.
+     * Trigger sending the `activation` ping if it wasn't sent already. Then, mark it so that it doesn't get triggered
+     * next time Fenix starts.
      */
     fun checkAndSend() {
         if (wasAlreadyTriggered()) {

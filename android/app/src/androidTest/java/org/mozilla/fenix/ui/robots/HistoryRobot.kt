@@ -5,7 +5,9 @@
 package org.mozilla.fenix.ui.robots
 
 import android.net.Uri
+import android.text.format.DateUtils
 import android.util.Log
+import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.RootMatchers.isDialog
@@ -15,67 +17,80 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
 import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
 import androidx.test.espresso.matcher.ViewMatchers.withId
-import androidx.test.espresso.matcher.ViewMatchers.withParent
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import org.hamcrest.Matchers.allOf
+import org.junit.Assert.assertTrue
 import org.mozilla.fenix.R
 import org.mozilla.fenix.helpers.Constants.TAG
 import org.mozilla.fenix.helpers.DataGenerationHelper.getStringResource
 import org.mozilla.fenix.helpers.MatcherHelper.assertUIObjectExists
 import org.mozilla.fenix.helpers.MatcherHelper.itemContainingText
+import org.mozilla.fenix.helpers.MatcherHelper.itemWithDescription
 import org.mozilla.fenix.helpers.MatcherHelper.itemWithResId
 import org.mozilla.fenix.helpers.MatcherHelper.itemWithResIdContainingText
 import org.mozilla.fenix.helpers.TestAssetHelper.waitingTime
+import org.mozilla.fenix.helpers.TestHelper.appContext
 import org.mozilla.fenix.helpers.TestHelper.mDevice
 import org.mozilla.fenix.helpers.TestHelper.packageName
+import org.mozilla.fenix.helpers.TestHelper.snackbarButton
 import org.mozilla.fenix.helpers.click
 import org.mozilla.fenix.helpers.ext.waitNotNull
 
-/**
- * Implementation of Robot Pattern for the history menu.
- */
+/** Implementation of Robot Pattern for the history menu. */
 class HistoryRobot {
 
-    fun verifyHistoryMenuView() {
-        Log.i(TAG, "verifyHistoryMenuView: Trying to verify that history menu view is visible")
-        onView(
-            allOf(withText("History"), withParent(withId(R.id.navigationToolbar))),
-        ).check(matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)))
-        Log.i(TAG, "verifyHistoryMenuView: Verified that history menu view is visible")
+    fun verifyHistoryMenuView(historyItemExists: Boolean = false) {
+        mDevice.waitForIdle()
+        assertUIObjectExists(
+            itemContainingText("History"),
+            itemWithDescription(getStringResource(R.string.action_bar_up_description)),
+            itemWithResId("$packageName:id/history_search"),
+            itemWithResId("$packageName:id/history_delete"),
+            itemWithResId("$packageName:id/recently_closed_tabs_header"),
+            itemWithResId("$packageName:id/recently_closed_tabs_description"),
+            if (historyItemExists) {
+                itemWithResId("$packageName:id/history_list")
+            } else {
+                itemWithResId("$packageName:id/history_empty_view")
+            },
+        )
     }
 
     fun verifyEmptyHistoryView() {
         Log.i(TAG, "verifyEmptyHistoryView: Waiting for $waitingTime ms for empty history list view to exist")
-        mDevice.findObject(
-            UiSelector().text("No history here"),
-        ).waitForExists(waitingTime)
+        mDevice.findObject(UiSelector().text("No history here")).waitForExists(waitingTime)
         Log.i(TAG, "verifyEmptyHistoryView: Waited for $waitingTime ms for empty history list view to exist")
 
         Log.i(TAG, "verifyEmptyHistoryView: Trying to verify empty history list view")
         onView(
-            allOf(
-                withId(R.id.history_empty_view),
-                withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE),
-            ),
-        ).check(matches(withText("No history here")))
+                allOf(
+                    withId(R.id.history_empty_view),
+                    withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE),
+                )
+            )
+            .check(matches(withText("No history here")))
         Log.i(TAG, "verifyEmptyHistoryView: Verified empty history list view")
     }
 
     fun verifyHistoryListExists() = assertUIObjectExists(itemWithResId("$packageName:id/history_list"))
 
-    fun verifyVisitedTimeTitle() {
+    fun verifyVisitedTimeTitle(timestamp: Long = System.currentTimeMillis()) {
+        val expectedTitle =
+            DateUtils.formatDateTime(
+                appContext,
+                timestamp,
+                DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_YEAR,
+            )
         mDevice.waitNotNull(
-            Until.findObject(
-                By.text("Today"),
-            ),
+            Until.findObject(By.text(expectedTitle)),
             waitingTime,
         )
-        Log.i(TAG, "verifyVisitedTimeTitle: Trying to verify \"Today\" chronological timeline title")
-        onView(withId(R.id.header_title)).check(matches(withText("Today")))
-        Log.i(TAG, "verifyVisitedTimeTitle: Verified \"Today\" chronological timeline title")
+        Log.i(TAG, "verifyVisitedTimeTitle: Trying to verify \"$expectedTitle\" chronological timeline title")
+        onView(withId(R.id.header_title)).check(matches(withText(expectedTitle)))
+        Log.i(TAG, "verifyVisitedTimeTitle: Verified \"$expectedTitle\" chronological timeline title")
     }
 
     fun verifyHistoryItemExists(shouldExist: Boolean, item: String) =
@@ -97,8 +112,14 @@ class HistoryRobot {
 
     fun verifyDeleteConfirmationMessage() =
         assertUIObjectExists(
-            itemWithResIdContainingText("$packageName:id/title", getStringResource(R.string.delete_history_prompt_title)),
-            itemWithResIdContainingText("$packageName:id/body", getStringResource(R.string.delete_history_prompt_body_2)),
+            itemWithResIdContainingText(
+                "$packageName:id/title",
+                getStringResource(R.string.delete_history_prompt_title),
+            ),
+            itemWithResIdContainingText(
+                "$packageName:id/body",
+                getStringResource(R.string.delete_history_prompt_body_2),
+            ),
         )
 
     fun clickDeleteHistoryButton(item: String) {
@@ -108,9 +129,15 @@ class HistoryRobot {
     }
 
     fun verifyDeleteHistoryItemButton(historyItemTitle: String) {
-        Log.i(TAG, "verifyDeleteHistoryItemButton: Trying to verify delete history button for item: $historyItemTitle is visible")
+        Log.i(
+            TAG,
+            "verifyDeleteHistoryItemButton: Trying to verify delete history button for item: $historyItemTitle is visible",
+        )
         deleteButton(historyItemTitle).check(matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)))
-        Log.i(TAG, "verifyDeleteHistoryItemButton: Verified delete history button for item: $historyItemTitle is visible")
+        Log.i(
+            TAG,
+            "verifyDeleteHistoryItemButton: Verified delete history button for item: $historyItemTitle is visible",
+        )
     }
 
     fun clickDeleteAllHistoryButton() {
@@ -127,42 +154,28 @@ class HistoryRobot {
 
     fun confirmDeleteAllHistory() {
         Log.i(TAG, "confirmDeleteAllHistory: Trying to click \"Delete\" dialog button")
-        onView(withText("Delete"))
-            .inRoot(isDialog())
-            .check(matches(isDisplayed()))
-            .click()
+        onView(withText("Delete")).inRoot(isDialog()).check(matches(isDisplayed())).click()
         Log.i(TAG, "confirmDeleteAllHistory: Clicked \"Delete\" dialog button")
     }
 
     fun cancelDeleteHistory() {
         Log.i(TAG, "cancelDeleteHistory: Trying to click \"Cancel\" dialog button")
         mDevice
-            .findObject(
-                UiSelector()
-                    .textContains(getStringResource(R.string.delete_browsing_data_prompt_cancel)),
-            ).click()
+            .findObject(UiSelector().textContains(getStringResource(R.string.delete_browsing_data_prompt_cancel)))
+            .click()
         Log.i(TAG, "cancelDeleteHistory: Clicked \"Cancel\" dialog button")
     }
 
     fun verifyUndoDeleteSnackBarButton() {
         Log.i(TAG, "verifyUndoDeleteSnackBarButton: Trying to verify \"Undo\" snackbar button")
-        snackBarUndoButton().check(matches(withText("UNDO")))
+        assertTrue(snackbarButton!!.children.count { it.text == "UNDO" } == 1)
         Log.i(TAG, "verifyUndoDeleteSnackBarButton: Verified \"Undo\" snackbar button")
-    }
-
-    fun clickUndoDeleteButton() {
-        Log.i(TAG, "verifyUndoDeleteSnackBarButton: Trying to click \"Undo\" snackbar button")
-        snackBarUndoButton().click()
-        Log.i(TAG, "verifyUndoDeleteSnackBarButton: Clicked \"Undo\" snackbar button")
     }
 
     fun verifySearchGroupDisplayed(shouldBeDisplayed: Boolean, searchTerm: String, groupSize: Int) =
         // checks if the search group exists in the Recently visited section
         assertUIObjectExists(
-            itemContainingText(searchTerm)
-                .getFromParent(
-                    UiSelector().text("$groupSize sites"),
-                ),
+            itemContainingText(searchTerm).getFromParent(UiSelector().text("$groupSize sites")),
             exists = shouldBeDisplayed,
         )
 
@@ -175,30 +188,55 @@ class HistoryRobot {
         Log.i(TAG, "openSearchGroup: Clicked search group: $searchTerm")
     }
 
-    class Transition {
+    class Transition(private val composeTestRule: ComposeTestRule) {
+        fun goBackToHomeScreen(interact: HomeScreenRobot.() -> Unit): HomeScreenRobot.Transition {
+            Log.i(TAG, "goBackToHomeScreen: Trying to click go back button")
+            onView(withContentDescription("Navigate up")).click()
+            Log.i(TAG, "goBackToHomeScreen: Clicked go back button")
+
+            HomeScreenRobot(composeTestRule).interact()
+            return HomeScreenRobot.Transition(composeTestRule)
+        }
+
         fun goBack(interact: BrowserRobot.() -> Unit): BrowserRobot.Transition {
             Log.i(TAG, "goBack: Trying to click go back menu button")
             onView(withContentDescription("Navigate up")).click()
             Log.i(TAG, "goBack: Clicked go back menu button")
 
-            BrowserRobot().interact()
-            return BrowserRobot.Transition()
+            BrowserRobot(composeTestRule).interact()
+            return BrowserRobot.Transition(composeTestRule)
         }
 
         fun openWebsite(url: Uri, interact: BrowserRobot.() -> Unit): BrowserRobot.Transition {
-            assertUIObjectExists(itemWithResId("$packageName:id/history_list"))
+            assertUIObjectExists(itemContainingText(url.toString()))
             Log.i(TAG, "openWebsite: Trying to click history item with url: $url")
             onView(withText(url.toString())).click()
             Log.i(TAG, "openWebsite: Clicked history item with url: $url")
 
-            BrowserRobot().interact()
-            return BrowserRobot.Transition()
+            BrowserRobot(composeTestRule).interact()
+            return BrowserRobot.Transition(composeTestRule)
+        }
+
+        fun openWebsiteFromSearchGroup(url: Uri, interact: BrowserRobot.() -> Unit): BrowserRobot.Transition {
+            assertUIObjectExists(itemWithResId("$packageName:id/history_metadata_group_list"))
+            Log.i(TAG, "openWebsiteFromSearchGroup: Trying to click group item with url: $url")
+            onView(withText(url.toString())).click()
+            Log.i(TAG, "openWebsiteFromSearchGroup: Clicked group item with url: $url")
+
+            BrowserRobot(composeTestRule).interact()
+            return BrowserRobot.Transition(composeTestRule)
         }
 
         fun openRecentlyClosedTabs(interact: RecentlyClosedTabsRobot.() -> Unit): RecentlyClosedTabsRobot.Transition {
-            Log.i(TAG, "openRecentlyClosedTabs: Waiting for $waitingTime ms for \"Recently closed tabs\" button to exist")
+            Log.i(
+                TAG,
+                "openRecentlyClosedTabs: Waiting for $waitingTime ms for \"Recently closed tabs\" button to exist",
+            )
             recentlyClosedTabsListButton().waitForExists(waitingTime)
-            Log.i(TAG, "openRecentlyClosedTabs: Waited for $waitingTime ms for \"Recently closed tabs\" button to exist")
+            Log.i(
+                TAG,
+                "openRecentlyClosedTabs: Waited for $waitingTime ms for \"Recently closed tabs\" button to exist",
+            )
             Log.i(TAG, "openRecentlyClosedTabs: Trying to click \"Recently closed tabs\" button")
             recentlyClosedTabsListButton().click()
             Log.i(TAG, "openRecentlyClosedTabs: Clicked \"Recently closed tabs\" button")
@@ -212,35 +250,31 @@ class HistoryRobot {
             itemWithResId("$packageName:id/history_search").click()
             Log.i(TAG, "clickSearchButton: Clicked search history button")
 
-            SearchRobot().interact()
-            return SearchRobot.Transition()
+            SearchRobot(composeTestRule).interact()
+            return SearchRobot.Transition(composeTestRule)
         }
     }
 }
 
-fun historyMenu(interact: HistoryRobot.() -> Unit): HistoryRobot.Transition {
+fun historyMenu(composeTestRule: ComposeTestRule, interact: HistoryRobot.() -> Unit): HistoryRobot.Transition {
     HistoryRobot().interact()
-    return HistoryRobot.Transition()
+    return HistoryRobot.Transition(composeTestRule)
 }
 
 private fun testPageTitle() = onView(withId(R.id.title))
 
 private fun pageUrl(url: String) = onView(allOf(withId(R.id.url), withText(url)))
 
-private fun deleteButton(title: String) =
-    onView(allOf(withContentDescription("Delete"), hasSibling(withText(title))))
+private fun deleteButton(title: String) = onView(allOf(withContentDescription("Delete"), hasSibling(withText(title))))
 
 private fun deleteButton() = onView(withId(R.id.history_delete))
 
-private fun snackBarUndoButton() = onView(withId(R.id.snackbar_btn))
-
 private fun deleteHistoryEverythingOption() =
-    mDevice
-        .findObject(
-            UiSelector()
-                .textContains(getStringResource(R.string.delete_history_prompt_button_everything))
-                .resourceId("$packageName:id/everything_button"),
-        )
+    mDevice.findObject(
+        UiSelector()
+            .textContains(getStringResource(R.string.delete_history_prompt_button_everything))
+            .resourceId("$packageName:id/everything_button")
+    )
 
 private fun recentlyClosedTabsListButton() =
     mDevice.findObject(UiSelector().resourceId("$packageName:id/recently_closed_tabs_header"))

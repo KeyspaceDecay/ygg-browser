@@ -4,72 +4,90 @@
 
 package org.mozilla.fenix.experimentintegration
 
+import androidx.compose.ui.test.junit4.v2.AndroidComposeTestRule as AndroidComposeTestRuleV2
+import androidx.test.platform.app.InstrumentationRegistry
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.mozilla.fenix.ext.settings
+import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.helpers.HomeActivityTestRule
 import org.mozilla.fenix.helpers.TestHelper
 import org.mozilla.fenix.ui.robots.homeScreen
 
 class GenericExperimentIntegrationTest {
-    private val experimentName = "Viewpoint"
+    private val experimentName = InstrumentationRegistry.getArguments().getString("EXP_NAME", "Viewpoint")
 
-    @get:Rule
-    val activityTestRule = HomeActivityTestRule(
-        isJumpBackInCFREnabled = false,
-        isPWAsPromptEnabled = false,
-        isTCPCFREnabled = false,
-    )
+    @get:Rule val composeTestRule = AndroidComposeTestRuleV2(HomeActivityTestRule()) { it.activity }
 
     @Before
     fun setUp() {
-        TestHelper.appContext.settings().showSecretDebugMenuThisSession = true
+        TestHelper.appContext.components.settings.showSecretDebugMenuThisSession = true
     }
 
     @After
     fun tearDown() {
-        TestHelper.appContext.settings().showSecretDebugMenuThisSession = false
+        TestHelper.appContext.components.settings.showSecretDebugMenuThisSession = false
     }
 
     @Test
     fun disableStudiesViaStudiesToggle() {
-        homeScreen {
-        }.openThreeDotMenu {
-        }.openSettings {
-        }.openExperimentsMenu {
-            verifyExperimentEnrolled(experimentName)
-        }.goBack {
-        }.openSettingsSubMenuDataCollection {
-            clickStudiesOption()
-            verifyStudiesToggle(true)
-            clickStudiesToggle()
-            clickStudiesDialogOkButton()
-        }
+        homeScreen(composeTestRule) {}
+            .openThreeDotMenu {}
+            .clickSettingsButton {}
+            .openExperimentsMenu {
+                verifyExperimentEnrolled(experimentName)
+            }
+            .goBack {}
+            .openSettingsSubMenuDataCollection {
+                clickStudiesOption()
+                verifyStudiesToggle(true)
+                clickStudiesToggle()
+            }
+    }
+
+    @Test
+    fun verifyStudiesAreDisabled() {
+        homeScreen(composeTestRule) {}
+            .openThreeDotMenu {}
+            .clickSettingsButton {}
+            .openSettingsSubMenuDataCollection {
+                clickStudiesOption()
+                verifyStudiesToggle(false)
+            }
+    }
+
+    @Test
+    fun testExperimentEnrolled() {
+        homeScreen(composeTestRule) {}
+            .openThreeDotMenu {}
+            .clickSettingsButton {}
+            .openExperimentsMenu {
+                verifyExperimentEnrolled(experimentName)
+            }
     }
 
     @Test
     fun testExperimentUnenrolled() {
-        homeScreen {
-        }.openThreeDotMenu {
-        }.openSettings {
-        }.openExperimentsMenu {
-            verifyExperimentExists(experimentName)
-            verifyExperimentNotEnrolled(experimentName)
-        }
+        homeScreen(composeTestRule) {}
+            .openThreeDotMenu {}
+            .clickSettingsButton {}
+            .openExperimentsMenu {
+                verifyExperimentExists(experimentName)
+                verifyExperimentNotEnrolled(experimentName)
+            }
     }
 
     @Test
     fun testExperimentUnenrolledViaSecretMenu() {
-        homeScreen {
-        }.openThreeDotMenu {
-        }.openSettings {
-        }.openExperimentsMenu {
-            verifyExperimentExists(experimentName)
-            verifyExperimentEnrolled(experimentName)
-            unenrollfromExperiment(experimentName)
-            verifyExperimentNotEnrolled(experimentName)
-        }
+        homeScreen(composeTestRule) {}
+            .openThreeDotMenu {}
+            .clickSettingsButton {}
+            .openExperimentsMenu {
+                verifyExperimentExists(experimentName)
+                verifyExperimentEnrolled(experimentName)
+                unenrollfromExperiment(experimentName)
+                verifyExperimentNotEnrolled(experimentName)
+            }
     }
 }

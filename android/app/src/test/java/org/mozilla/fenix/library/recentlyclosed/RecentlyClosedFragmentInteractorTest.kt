@@ -13,15 +13,11 @@ import org.junit.Test
 class RecentlyClosedFragmentInteractorTest {
 
     lateinit var interactor: RecentlyClosedFragmentInteractor
-    private val defaultRecentlyClosedController: DefaultRecentlyClosedController =
-        mockk(relaxed = true)
+    private val defaultRecentlyClosedController: DefaultRecentlyClosedController = mockk(relaxed = true)
 
     @Before
     fun setup() {
-        interactor =
-            RecentlyClosedFragmentInteractor(
-                recentlyClosedController = defaultRecentlyClosedController,
-            )
+        interactor = RecentlyClosedFragmentInteractor(recentlyClosedController = defaultRecentlyClosedController)
     }
 
     @Test
@@ -40,6 +36,16 @@ class RecentlyClosedFragmentInteractorTest {
 
         verify {
             defaultRecentlyClosedController.handleNavigateToHistory()
+        }
+    }
+
+    @Test
+    fun onOpen() {
+        val tab = TabState(id = "tab-id", title = "Mozilla", url = "mozilla.org", lastAccess = 1L)
+        interactor.open(tab)
+
+        verify {
+            defaultRecentlyClosedController.handleRestore(tab)
         }
     }
 }

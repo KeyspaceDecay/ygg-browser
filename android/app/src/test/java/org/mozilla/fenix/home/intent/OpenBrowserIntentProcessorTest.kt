@@ -13,19 +13,21 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.BrowserDirection
 import org.mozilla.fenix.HomeActivity
-import org.mozilla.fenix.helpers.FenixRobolectricTestRunner
+import org.mozilla.fenix.utils.Settings
+import org.robolectric.RobolectricTestRunner
 
-@RunWith(FenixRobolectricTestRunner::class)
+@RunWith(RobolectricTestRunner::class)
 class OpenBrowserIntentProcessorTest {
 
     private val activity: HomeActivity = mockk(relaxed = true)
     private val navController: NavController = mockk()
     private val out: Intent = mockk(relaxed = true)
+    private val settings: Settings = mockk()
 
     @Test
     fun `do not process blank intents`() {
         val processor = OpenBrowserIntentProcessor(activity) { null }
-        processor.process(Intent(), navController, out)
+        processor.process(Intent(), navController, out, settings)
 
         verify { activity wasNot Called }
         verify { navController wasNot Called }
@@ -34,11 +36,12 @@ class OpenBrowserIntentProcessorTest {
 
     @Test
     fun `do not process when open extra is false`() {
-        val intent = Intent().apply {
-            putExtra(HomeActivity.OPEN_TO_BROWSER, false)
-        }
+        val intent =
+            Intent().apply {
+                putExtra(HomeActivity.OPEN_TO_BROWSER, false)
+            }
         val processor = OpenBrowserIntentProcessor(activity) { null }
-        processor.process(intent, navController, out)
+        processor.process(intent, navController, out, settings)
 
         verify { activity wasNot Called }
         verify { navController wasNot Called }
@@ -47,11 +50,12 @@ class OpenBrowserIntentProcessorTest {
 
     @Test
     fun `process when open extra is true`() {
-        val intent = Intent().apply {
-            putExtra(HomeActivity.OPEN_TO_BROWSER, true)
-        }
+        val intent =
+            Intent().apply {
+                putExtra(HomeActivity.OPEN_TO_BROWSER, true)
+            }
         val processor = OpenBrowserIntentProcessor(activity) { "session-id" }
-        processor.process(intent, navController, out)
+        processor.process(intent, navController, out, settings)
 
         verify { activity.openToBrowser(BrowserDirection.FromGlobal, "session-id") }
         verify { navController wasNot Called }

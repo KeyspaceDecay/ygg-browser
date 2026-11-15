@@ -16,31 +16,29 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.compose.ui.unit.dp
-import androidx.core.os.bundleOf
-import androidx.fragment.app.setFragmentResult
+import androidx.compose.ui.platform.LocalView
+import androidx.fragment.compose.content
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import com.google.android.material.R as materialR
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import mozilla.components.browser.state.selector.findTab
+import mozilla.components.browser.state.selector.findCustomTab
+import mozilla.components.browser.state.selector.findTabOrCustomTabOrSelectedTab
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.engine.translate.Language
 import mozilla.components.concept.engine.translate.TranslationError
+import mozilla.components.feature.downloads.FileSizeFormatter
 import mozilla.components.lib.state.ext.observeAsComposableState
 import mozilla.components.support.base.feature.ViewBoundFeatureWrapper
-import org.mozilla.fenix.BrowserDirection
-import org.mozilla.fenix.GleanMetrics.Events
-import org.mozilla.fenix.HomeActivity
+import org.mozilla.fenix.GleanMetrics.Translations
 import org.mozilla.fenix.R
+import org.mozilla.fenix.components.AppStore
+import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.ext.components
+import org.mozilla.fenix.ext.openToBrowser
 import org.mozilla.fenix.ext.requireComponents
-import org.mozilla.fenix.ext.settings
+import org.mozilla.fenix.ext.runIfFragmentIsAttached
 import org.mozilla.fenix.nimbus.FxNimbus
 import org.mozilla.fenix.settings.SupportUtils
 import org.mozilla.fenix.theme.FirefoxTheme
@@ -48,137 +46,150 @@ import org.mozilla.fenix.translations.preferences.downloadlanguages.DownloadLang
 import org.mozilla.fenix.translations.preferences.downloadlanguages.DownloadLanguageFileDialogType
 import org.mozilla.fenix.translations.preferences.downloadlanguages.DownloadLanguagesFeature
 
-/**
- * The enum is to know what bottom sheet to open.
- */
+/** The enum is to know what bottom sheet to open. */
 enum class TranslationsDialogAccessPoint {
-    Translations, TranslationsOptions,
+    Translations,
+    TranslationsOptions,
 }
 
-/**
- * A bottom sheet fragment displaying the Firefox Translation dialog.
- */
+/** A bottom sheet fragment displaying the Firefox Translation dialog. */
 class TranslationsDialogFragment : BottomSheetDialogFragment() {
 
-    private var behavior: BottomSheetBehavior<View>? = null
     private val args by navArgs<TranslationsDialogFragmentArgs>()
+
+    private val appStore: AppStore by lazy { requireComponents.appStore }
     private val browserStore: BrowserStore by lazy { requireComponents.core.store }
+
     private val translationDialogBinding = ViewBoundFeatureWrapper<TranslationsDialogBinding>()
-    private val downloadLanguagesFeature =
-        ViewBoundFeatureWrapper<DownloadLanguagesFeature>()
+    private val downloadLanguagesFeature = ViewBoundFeatureWrapper<DownloadLanguagesFeature>()
+
     private lateinit var translationsDialogStore: TranslationsDialogStore
+
+    private var behavior: BottomSheetBehavior<View>? = null
     private var isTranslationInProgress: Boolean? = null
     private var isDataSaverEnabledAndWifiDisabled = false
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         super.onCreateDialog(savedInstanceState).apply {
             setOnShowListener {
-                val bottomSheet = findViewById<View?>(R.id.design_bottom_sheet)
-                bottomSheet?.setBackgroundResource(android.R.color.transparent)
-                behavior = BottomSheetBehavior.from(bottomSheet)
-                behavior?.peekHeight = resources.displayMetrics.heightPixels
-                behavior?.state = BottomSheetBehavior.STATE_EXPANDED
+                runIfFragmentIsAttached {
+                    val bottomSheet = findViewById<View?>(materialR.id.design_bottom_sheet)
+                    bottomSheet?.let {
+                        it.setBackgroundResource(android.R.color.transparent)
+                        behavior = BottomSheetBehavior.from(it)
+                        behavior?.peekHeight = resources.displayMetrics.heightPixels
+                        behavior?.state = BottomSheetBehavior.STATE_EXPANDED
+                        behavior?.skipCollapsed = true
+                    }
+                }
             }
         }
 
-    @Suppress("LongMethod")
+    @Suppress("LongMethod", "CognitiveComplexMethod")
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
-    ): View = ComposeView(requireContext()).apply {
-        translationsDialogStore = TranslationsDialogStore(
-            TranslationsDialogState(),
-            listOf(
-                TranslationsDialogMiddleware(
-                    browserStore = browserStore,
-                    sessionId = args.sessionId,
+    ): View {
+        translationsDialogStore =
+            TranslationsDialogStore(
+                TranslationsDialogState(),
+                listOf(
+                    TranslationsDialogMiddleware(
+                        browserStore = browserStore,
+                        settings = requireComponents.settings,
+                        sessionId = args.sessionId,
+                    )
                 ),
-            ),
-        )
-        setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-        setContent {
+            )
+        return content {
             FirefoxTheme {
                 var translationsVisibility by remember {
-                    mutableStateOf(
-                        args.translationsDialogAccessPoint == TranslationsDialogAccessPoint.Translations,
+                    mutableStateOf(args.translationsDialogAccessPoint == TranslationsDialogAccessPoint.Translations)
+                }
+
+                val translationsDialogState = translationsDialogStore.observeAsComposableState { it }.value
+
+                val learnMoreUrl =
+                    SupportUtils.getSumoURLForTopic(
+                        requireContext(),
+                        SupportUtils.SumoTopic.TRANSLATIONS,
                     )
+
+                isTranslationInProgress = translationsDialogState.isTranslationInProgress
+
+                if (translationsDialogState.dismissDialogState is DismissDialogState.Dismiss) {
+                    dismissDialog()
                 }
 
-                var translationsHeightDp by remember {
-                    mutableStateOf(0.dp)
+                var showDownloadLanguageFileDialog by remember {
+                    mutableStateOf(false)
                 }
 
-                var translationsOptionsHeightDp by remember {
-                    mutableStateOf(0.dp)
+                var revertAlwaysTranslateLanguageCheckBox by remember {
+                    mutableStateOf(false)
                 }
-
-                var translationsWidthDp by remember {
-                    mutableStateOf(0.dp)
-                }
-
-                val density = LocalDensity.current
-
-                val translationsDialogState =
-                    translationsDialogStore.observeAsComposableState { it }.value
-
-                val learnMoreUrl = SupportUtils.getSumoURLForTopic(
-                    requireContext(),
-                    SupportUtils.SumoTopic.TRANSLATIONS,
-                )
-
-                TranslationDialogBottomSheet {
-                    TranslationsAnimation(
-                        translationsVisibility = translationsVisibility,
-                        density = density,
-                        translationsOptionsHeightDp = translationsOptionsHeightDp,
-                    ) {
-                        if (translationsVisibility) {
-                            Column(
-                                modifier = Modifier.onGloballyPositioned { coordinates ->
-                                    translationsHeightDp = with(density) {
-                                        coordinates.size.height.toDp()
-                                    }
-                                    translationsWidthDp = with(density) {
-                                        coordinates.size.width.toDp()
-                                    }
-                                },
-                            ) {
-                                FxNimbus.features.translations.recordExposure()
+                TranslationDialogBottomSheet(
+                    onRequestDismiss = { behavior?.state = BottomSheetBehavior.STATE_HIDDEN }
+                ) {
+                    TranslationsAnimation(showMainSheet = translationsVisibility) { showMainPage ->
+                        if (showMainPage) {
+                            Column {
                                 TranslationsDialogContent(
                                     learnMoreUrl = learnMoreUrl,
                                     showPageSettings = FxNimbus.features.translations.value().pageSettingsEnabled,
                                     translationsDialogState = translationsDialogState,
-                                ) {
-                                    Events.translationsAction.record(Events.TranslationsActionExtra("page_settings"))
-                                    translationsVisibility = false
-                                }
+                                    onSettingClicked = {
+                                        Translations.action.record(Translations.ActionExtra("page_settings"))
+                                        translationsVisibility = false
+                                    },
+                                    onShowDownloadLanguageFileDialog = {
+                                        showDownloadLanguageFileDialog = true
+                                    },
+                                )
+                            }
+                        } else {
+                            Column {
+                                TranslationsOptionsDialogContent(
+                                    learnMoreUrl = learnMoreUrl,
+                                    showGlobalSettings = FxNimbus.features.translations.value().globalSettingsEnabled,
+                                    isTranslated = translationsDialogState.isTranslated == true,
+                                    initialFrom = translationsDialogState.initialFrom,
+                                    onBackClicked = { translationsVisibility = true },
+                                    onTranslate = {
+                                        translate(
+                                            translationsDialogState = translationsDialogState,
+                                            onShowDownloadLanguageFileDialog = {
+                                                showDownloadLanguageFileDialog = true
+                                                revertAlwaysTranslateLanguageCheckBox = true
+                                            },
+                                        )
+                                    },
+                                )
                             }
                         }
                     }
 
-                    TranslationsOptionsAnimation(
-                        translationsVisibility = !translationsVisibility,
-                        density = density,
-                        translationsHeightDp = translationsHeightDp,
-                        translationsWidthDp = translationsWidthDp,
-                    ) {
-                        if (!translationsVisibility) {
-                            Column(
-                                modifier = Modifier.onGloballyPositioned { coordinates ->
-                                    translationsOptionsHeightDp = with(density) {
-                                        coordinates.size.height.toDp()
+                    if (showDownloadLanguageFileDialog) {
+                        translationsDialogState.translationDownloadSize?.size?.let { fileSize ->
+                            DownloadLanguageFileDialog(
+                                fileSize = fileSize,
+                                fileSizeFormatter = requireComponents.core.fileSizeFormatter,
+                                onConfirmDownload = {
+                                    showDownloadLanguageFileDialog = false
+                                },
+                                onCancel = {
+                                    showDownloadLanguageFileDialog = false
+                                    if (revertAlwaysTranslateLanguageCheckBox) {
+                                        translationsDialogStore.dispatch(
+                                            TranslationsDialogAction.UpdatePageSettingsValue(
+                                                TranslationPageSettingsOption.AlwaysTranslateLanguage(),
+                                                false,
+                                            )
+                                        )
                                     }
                                 },
-                            ) {
-                                TranslationsOptionsDialogContent(
-                                    learnMoreUrl = learnMoreUrl,
-                                    showGlobalSettings = FxNimbus.features.translations.value().globalSettingsEnabled,
-                                    initialFrom = translationsDialogState?.initialFrom,
-                                ) {
-                                    translationsVisibility = true
-                                }
-                            }
+                            )
                         }
                     }
                 }
@@ -189,172 +200,206 @@ class TranslationsDialogFragment : BottomSheetDialogFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         translationDialogBinding.set(
-            feature = TranslationsDialogBinding(
-                browserStore = browserStore,
-                translationsDialogStore = translationsDialogStore,
-                sessionId = args.sessionId,
-                getTranslatedPageTitle = { localizedFrom, localizedTo ->
-                    requireContext().getString(
-                        R.string.translations_bottom_sheet_title_translation_completed,
-                        localizedFrom,
-                        localizedTo,
-                    )
-                },
-            ),
+            feature =
+                TranslationsDialogBinding(
+                    browserStore = browserStore,
+                    sessionId = args.sessionId,
+                    translationsDialogStore = translationsDialogStore,
+                    getTranslatedPageTitle = { localizedFrom, localizedTo ->
+                        requireContext()
+                            .getString(
+                                R.string.translations_bottom_sheet_title_translation_completed,
+                                localizedFrom,
+                                localizedTo,
+                            )
+                    },
+                ),
             owner = this,
             view = view,
         )
         translationsDialogStore.dispatch(TranslationsDialogAction.InitTranslationsDialog)
 
         downloadLanguagesFeature.set(
-            feature = DownloadLanguagesFeature(
-                context = requireContext(),
-                wifiConnectionMonitor = requireContext().components.wifiConnectionMonitor,
-                onDataSaverAndWifiChanged = {
-                    isDataSaverEnabledAndWifiDisabled = it
-                },
-            ),
+            feature =
+                DownloadLanguagesFeature(
+                    context = requireContext(),
+                    wifiConnectionMonitor = requireContext().components.wifiConnectionMonitor,
+                    onDataSaverAndWifiChanged = {
+                        isDataSaverEnabledAndWifiDisabled = it
+                    },
+                ),
             owner = this,
             view = view,
         )
     }
 
-    @Suppress("LongMethod")
     @Composable
     private fun TranslationsDialogContent(
         learnMoreUrl: String,
         showPageSettings: Boolean,
-        translationsDialogState: TranslationsDialogState? = null,
+        translationsDialogState: TranslationsDialogState,
         onSettingClicked: () -> Unit,
+        onShowDownloadLanguageFileDialog: () -> Unit,
     ) {
-        translationsDialogState?.let { state ->
-            isTranslationInProgress = state.isTranslationInProgress
+        val localView = LocalView.current
 
-            if (state.dismissDialogState is DismissDialogState.Dismiss) {
-                dismissDialog()
-            }
-
-            var showDownloadLanguageFileDialog by remember {
-                mutableStateOf(false)
-            }
-
-            TranslationsDialog(
-                translationsDialogState = translationsDialogState,
-                learnMoreUrl = learnMoreUrl,
-                showPageSettings = showPageSettings,
-                showFirstTime = requireContext().settings().showFirstTimeTranslation,
-                onSettingClicked = onSettingClicked,
-                onLearnMoreClicked = { openBrowserAndLoad(learnMoreUrl) },
-                onPositiveButtonClicked = {
-                    if (state.error is TranslationError.CouldNotLoadLanguagesError) {
-                        translationsDialogStore.dispatch(TranslationsDialogAction.FetchSupportedLanguages)
-                    } else {
-                        if (
-                            isDataSaverEnabledAndWifiDisabled &&
-                            !requireContext().settings().ignoreTranslationsDataSaverWarning &&
-                            state.translationDownloadSize != null
-                        ) {
-                            showDownloadLanguageFileDialog = true
-                        } else {
-                            translationsDialogStore.dispatch(TranslationsDialogAction.TranslateAction)
-                        }
-                    }
-                },
-                onNegativeButtonClicked = {
-                    if (state.isTranslated) {
-                        translationsDialogStore.dispatch(TranslationsDialogAction.RestoreTranslation)
-                    }
-                    dismiss()
-                },
-                onFromSelected = { fromLanguage ->
-                    state.initialTo?.let {
-                        translationsDialogStore.dispatch(
-                            TranslationsDialogAction.FetchDownloadFileSizeAction(
-                                toLanguage = it,
-                                fromLanguage = fromLanguage,
-                            ),
-                        )
-                    }
-
-                    translationsDialogStore.dispatch(
-                        TranslationsDialogAction.UpdateFromSelectedLanguage(
-                            fromLanguage,
-                        ),
+        TranslationsDialog(
+            translationsDialogState = translationsDialogState,
+            learnMoreUrl = learnMoreUrl,
+            showPageSettings = showPageSettings,
+            showFirstTime = requireComponents.settings.showFirstTimeTranslation,
+            onSettingClicked = onSettingClicked,
+            onLearnMoreClicked = { openBrowserAndLoad(learnMoreUrl) },
+            onPositiveButtonClicked = {
+                translate(
+                    translationsDialogState = translationsDialogState,
+                    onShowDownloadLanguageFileDialog = onShowDownloadLanguageFileDialog,
+                )
+            },
+            onNegativeButtonClicked = {
+                if (translationsDialogState.isTranslated || translationsDialogState.isTranslationInProgress) {
+                    @Suppress("DEPRECATION")
+                    localView.announceForAccessibility(
+                        requireContext()
+                            .getString(R.string.translations_bottom_sheet_restore_accessibility_announcement)
                     )
-                },
-                onToSelected = { toLanguage ->
-                    state.initialFrom?.let {
-                        translationsDialogStore.dispatch(
-                            TranslationsDialogAction.FetchDownloadFileSizeAction(
-                                toLanguage = toLanguage,
-                                fromLanguage = it,
-                            ),
-                        )
-                    }
-
+                    isTranslationInProgress = false
+                    translationsDialogStore.dispatch(TranslationsDialogAction.RestoreTranslation)
+                }
+                dismiss()
+            },
+            onFromSelected = { fromLanguage ->
+                translationsDialogState.initialTo?.let {
                     translationsDialogStore.dispatch(
-                        TranslationsDialogAction.UpdateToSelectedLanguage(
-                            toLanguage,
-                        ),
-                    )
-                },
-            )
-
-            var checkBoxEnabled by remember { mutableStateOf(false) }
-            if (showDownloadLanguageFileDialog) {
-                state.translationDownloadSize?.size?.let { fileSize ->
-                    DownloadLanguageFileDialog(
-                        downloadLanguageDialogType = DownloadLanguageFileDialogType.TranslationRequest,
-                        fileSize = fileSize,
-                        isCheckBoxEnabled = checkBoxEnabled,
-                        onSavingModeStateChange = { checkBoxEnabled = it },
-                        onConfirmDownload = {
-                            requireContext().settings().ignoreTranslationsDataSaverWarning =
-                                checkBoxEnabled
-                            showDownloadLanguageFileDialog = false
-                            translationsDialogStore.dispatch(TranslationsDialogAction.TranslateAction)
-                        },
-                        onCancel = { showDownloadLanguageFileDialog = false },
+                        TranslationsDialogAction.FetchDownloadFileSizeAction(
+                            toLanguage = it,
+                            fromLanguage = fromLanguage,
+                        )
                     )
                 }
+
+                translationsDialogStore.dispatch(TranslationsDialogAction.UpdateFromSelectedLanguage(fromLanguage))
+            },
+            onToSelected = { toLanguage ->
+                translationsDialogState.initialFrom?.let {
+                    translationsDialogStore.dispatch(
+                        TranslationsDialogAction.FetchDownloadFileSizeAction(
+                            toLanguage = toLanguage,
+                            fromLanguage = it,
+                        )
+                    )
+                }
+
+                translationsDialogStore.dispatch(TranslationsDialogAction.UpdateToSelectedLanguage(toLanguage))
+            },
+        )
+    }
+
+    private fun translate(
+        translationsDialogState: TranslationsDialogState? = null,
+        onShowDownloadLanguageFileDialog: () -> Unit,
+    ) {
+        if (translationsDialogState?.error is TranslationError.CouldNotLoadLanguagesError) {
+            translationsDialogStore.dispatch(TranslationsDialogAction.FetchSupportedLanguages)
+        } else {
+            if (
+                isDataSaverEnabledAndWifiDisabled &&
+                    !requireComponents.settings.ignoreTranslationsDataSaverWarning &&
+                    translationsDialogState?.translationDownloadSize != null
+            ) {
+                onShowDownloadLanguageFileDialog()
+            } else {
+                translationsDialogStore.dispatch(TranslationsDialogAction.TranslateAction)
             }
         }
+    }
+
+    @Composable
+    private fun DownloadLanguageFileDialog(
+        fileSize: Long,
+        fileSizeFormatter: FileSizeFormatter,
+        onConfirmDownload: () -> Unit,
+        onCancel: () -> Unit,
+    ) {
+        var checkBoxEnabled by remember { mutableStateOf(false) }
+        DownloadLanguageFileDialog(
+            downloadLanguageDialogType = DownloadLanguageFileDialogType.TranslationRequest,
+            fileSizeFormatter = fileSizeFormatter,
+            fileSize = fileSize,
+            isCheckBoxEnabled = checkBoxEnabled,
+            onSavingModeStateChange = { checkBoxEnabled = it },
+            onConfirmDownload = {
+                requireComponents.settings.ignoreTranslationsDataSaverWarning = checkBoxEnabled
+                onConfirmDownload()
+                translationsDialogStore.dispatch(TranslationsDialogAction.TranslateAction)
+            },
+            onCancel = { onCancel() },
+        )
     }
 
     @Composable
     private fun TranslationsOptionsDialogContent(
         learnMoreUrl: String,
         showGlobalSettings: Boolean,
+        isTranslated: Boolean,
         initialFrom: Language? = null,
         onBackClicked: () -> Unit,
+        onTranslate: () -> Unit,
     ) {
         val pageSettingsState =
-            browserStore.observeAsComposableState { state ->
-                state.findTab(args.sessionId)?.translationsState?.pageSettings
-            }.value
+            browserStore
+                .observeAsComposableState { state ->
+                    state.findTabOrCustomTabOrSelectedTab(args.sessionId)?.translationsState?.pageSettings
+                }
+                .value
+
+        val offerTranslation =
+            browserStore
+                .observeAsComposableState { state ->
+                    state.translationEngine.offerTranslation
+                }
+                .value
+
+        val pageSettingsError =
+            browserStore
+                .observeAsComposableState { state ->
+                    state.findTabOrCustomTabOrSelectedTab(args.sessionId)?.translationsState?.settingsError
+                }
+                .value
+
+        val localView = LocalView.current
 
         TranslationsOptionsDialog(
             context = requireContext(),
             translationPageSettings = pageSettingsState,
+            translationPageSettingsError = pageSettingsError,
+            offerTranslation = offerTranslation,
             showGlobalSettings = showGlobalSettings,
             initialFrom = initialFrom,
             onStateChange = { type, checked ->
+                if (type is TranslationPageSettingsOption.AlwaysTranslateLanguage && checked && !isTranslated) {
+                    onTranslate()
+                }
                 translationsDialogStore.dispatch(
                     TranslationsDialogAction.UpdatePageSettingsValue(
                         type as TranslationPageSettingsOption,
                         checked,
-                    ),
+                    )
                 )
+
+                if (checked) {
+                    @Suppress("DEPRECATION")
+                    localView.announceForAccessibility(type.descriptionId?.let { getString(it) })
+                }
             },
             onBackClicked = onBackClicked,
             onTranslationSettingsClicked = {
-                Events.translationsAction.record(Events.TranslationsActionExtra("global_settings"))
-                findNavController().navigate(
-                    TranslationsDialogFragmentDirections
-                        .actionTranslationsDialogFragmentToTranslationSettingsFragment(
-                            sessionId = args.sessionId,
-                        ),
-                )
+                Translations.action.record(Translations.ActionExtra("global_settings"))
+                findNavController()
+                    .navigate(
+                        TranslationsDialogFragmentDirections
+                            .actionTranslationsDialogFragmentToTranslationSettingsFragment()
+                    )
             },
             aboutTranslationClicked = {
                 openBrowserAndLoad(learnMoreUrl)
@@ -364,33 +409,42 @@ class TranslationsDialogFragment : BottomSheetDialogFragment() {
 
     override fun onDismiss(dialog: DialogInterface) {
         super.onDismiss(dialog)
+
         if (isTranslationInProgress == true) {
-            setFragmentResult(
-                TRANSLATION_IN_PROGRESS,
-                bundleOf(
-                    SESSION_ID to args.sessionId,
-                ),
+            appStore.dispatch(
+                AppAction.TranslationsAction.TranslationStarted(
+                    sessionId = browserStore.state.findTabOrCustomTabOrSelectedTab(args.sessionId)?.id
+                )
             )
         }
     }
 
     private fun openBrowserAndLoad(learnMoreUrl: String) {
-        (requireActivity() as HomeActivity).openToBrowserAndLoad(
-            searchTermOrURL = learnMoreUrl,
-            newTab = true,
-            from = BrowserDirection.FromTranslationsDialogFragment,
-        )
+        val sessionId = args.sessionId
+        when (sessionId != null && browserStore.state.findCustomTab(sessionId) != null) {
+            true -> {
+                requireComponents.useCases.sessionUseCases.loadUrl(
+                    url = learnMoreUrl,
+                    sessionId = sessionId,
+                )
+                dismiss()
+                return
+            }
+
+            else -> {
+                findNavController().openToBrowser()
+                requireComponents.useCases.fenixBrowserUseCases.loadUrlOrSearch(
+                    searchTermOrURL = learnMoreUrl,
+                    newTab = true,
+                )
+            }
+        }
     }
 
     private fun dismissDialog() {
-        if (requireContext().settings().showFirstTimeTranslation) {
-            requireContext().settings().showFirstTimeTranslation = false
+        if (requireComponents.settings.showFirstTimeTranslation) {
+            requireComponents.settings.showFirstTimeTranslation = false
         }
         dismiss()
-    }
-
-    companion object {
-        const val TRANSLATION_IN_PROGRESS = "translationInProgress"
-        const val SESSION_ID = "sessionId"
     }
 }

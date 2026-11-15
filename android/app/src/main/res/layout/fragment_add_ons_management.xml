@@ -36,9 +36,9 @@
         android:padding="4dp"
         android:layout_gravity="center"
         android:gravity="center"
-        android:text="@string/no_add_ons"
+        android:text="@string/extensions_management_no_extensions"
         android:textAlignment="center"
-        android:textColor="?attr/textSecondary"
+        android:textColor="?attr/colorOnSurfaceVariant"
         android:textSize="16sp"
         android:visibility="gone"/>
 

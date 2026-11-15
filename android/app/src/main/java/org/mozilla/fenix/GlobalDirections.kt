@@ -48,6 +48,17 @@ enum class GlobalDirections(val navDirections: NavDirections, val destinationId:
         NavGraphDirections.actionGlobalAddonsManagementFragment(),
         R.id.addonsManagementFragment,
     ),
+    SettingsAIControls(
+        NavGraphDirections.actionGlobalAiControlsFragment(),
+        R.id.aiControlsFragment,
+    ),
+    SettingsIpProtection(
+        NavGraphDirections.actionGlobalIpProtectionFragment(
+            entrypoint = FenixFxAEntryPoint.DeepLink,
+            startAuthFlow = false,
+        ),
+        R.id.ipProtectionFragment,
+    ),
     SettingsLogins(
         NavGraphDirections.actionGlobalSavedLoginsAuthFragment(),
         R.id.saveLoginSettingFragment,
@@ -59,5 +70,17 @@ enum class GlobalDirections(val navDirections: NavDirections, val destinationId:
     WallpaperSettings(
         NavGraphDirections.actionGlobalWallpaperSettingsFragment(),
         R.id.wallpaperSettingsFragment,
+    ),
+    SettingsPrivateBrowsing(
+        NavGraphDirections.actionGlobalPrivateBrowsingFragment(),
+        R.id.privateBrowsingFragment,
+    ),
+    SettingsAppIcon(
+        NavGraphDirections.actionGlobalAppIconSelectionFragment(),
+        R.id.appIconSelectionFragment,
+    ),
+    ProtectionsDashboard(
+        NavGraphDirections.actionGlobalProtectionsDashboard(null),
+        R.id.global_protections_dashboard,
     ),
 }

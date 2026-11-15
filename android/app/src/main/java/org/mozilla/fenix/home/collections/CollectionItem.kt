@@ -8,45 +8,48 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material.DismissDirection.EndToStart
-import androidx.compose.material.DismissDirection.StartToEnd
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.SwipeToDismiss
-import androidx.compose.material.rememberDismissState
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
-import mozilla.components.browser.state.state.recover.RecoverableTab
-import mozilla.components.concept.engine.Engine
 import mozilla.components.feature.tab.collections.Tab
-import org.mozilla.fenix.R.drawable
+import mozilla.components.ui.icons.R as iconsR
 import org.mozilla.fenix.R.string
-import org.mozilla.fenix.compose.annotation.LightDarkPreview
+import org.mozilla.fenix.compose.DismissibleItemBackground
 import org.mozilla.fenix.compose.list.FaviconListItem
-import org.mozilla.fenix.compose.tabstray.DismissedTabBackground
 import org.mozilla.fenix.ext.toShortUrl
+import org.mozilla.fenix.home.fake.FakeHomepagePreview
 import org.mozilla.fenix.theme.FirefoxTheme
-import java.io.File
 
-/**
- * Rectangular shape with only right angles used to display a middle tab.
- */
-private val MIDDLE_TAB_SHAPE = RoundedCornerShape(0.dp)
+/** Rectangular shape with only right angles used to display a middle tab. */
+private val MIDDLE_TAB_SHAPE = RectangleShape
 
-/**
- * Rectangular shape with only the bottom corners rounded used to display the last tab in a collection.
- */
-private val BOTTOM_TAB_SHAPE = RoundedCornerShape(bottomStart = 8.dp, bottomEnd = 8.dp)
+/** Shape with only the bottom corners rounded used to display the last tab in a collection. */
+private val BOTTOM_TAB_SHAPE: Shape
+    @Composable
+    get() =
+        MaterialTheme.shapes.small.copy(
+            topStart = CornerSize(0.dp),
+            topEnd = CornerSize(0.dp),
+        )
 
 /**
  * Display an individual [Tab] as part of a collection.
@@ -56,25 +59,33 @@ private val BOTTOM_TAB_SHAPE = RoundedCornerShape(bottomStart = 8.dp, bottomEnd 
  * @param onClick Invoked when the user click on the tab.
  * @param onRemove Invoked when the user removes the tab informing also if the tab was swiped to be removed.
  */
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
+@Suppress("CognitiveComplexMethod")
 fun CollectionItem(
     tab: Tab,
     isLastInCollection: Boolean,
     onClick: () -> Unit,
     onRemove: (Boolean) -> Unit,
 ) {
-    val dismissState = rememberDismissState()
+    val dismissState = rememberSwipeToDismissBoxState()
 
-    if (dismissState.isDismissed(StartToEnd) || dismissState.isDismissed(EndToStart)) {
-        onRemove(true)
+    LaunchedEffect(dismissState.currentValue) {
+        val value = dismissState.currentValue
+        when (value) {
+            SwipeToDismissBoxValue.StartToEnd,
+            SwipeToDismissBoxValue.EndToStart -> {
+                onRemove(true)
+            }
+            SwipeToDismissBoxValue.Settled -> {} // no-op
+        }
     }
 
-    SwipeToDismiss(
+    SwipeToDismissBox(
         state = dismissState,
-        background = {
-            DismissedTabBackground(
-                dismissDirection = dismissState.dismissDirection,
+        backgroundContent = {
+            DismissibleItemBackground(
+                isSwipeActive = dismissState.dismissDirection != SwipeToDismissBoxValue.Settled,
+                isSwipingToStart = dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart,
                 shape = if (isLastInCollection) BOTTOM_TAB_SHAPE else MIDDLE_TAB_SHAPE,
             )
         },
@@ -85,7 +96,7 @@ fun CollectionItem(
         val clippingModifier by remember {
             derivedStateOf {
                 try {
-                    if (dismissState.progress.fraction != 1f) Modifier else Modifier.clipTop()
+                    if (dismissState.progress != 1f) Modifier else Modifier.clipTop()
                 } catch (e: NoSuchElementException) {
                     // `androidx.compose.material.Swipeable.findBounds` couldn't find anchors.
                     // Happened once in testing when deleting a tab. Could not reproduce afterwards.
@@ -95,18 +106,17 @@ fun CollectionItem(
         }
 
         Card(
-            modifier = clippingModifier
-                .fillMaxWidth(),
+            modifier = clippingModifier.fillMaxWidth(),
             shape = if (isLastInCollection) BOTTOM_TAB_SHAPE else MIDDLE_TAB_SHAPE,
-            backgroundColor = FirefoxTheme.colors.layer2,
-            elevation = 5.dp,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright),
+            elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
         ) {
             FaviconListItem(
                 label = tab.title,
+                url = tab.url,
                 description = tab.url.toShortUrl(),
                 onClick = onClick,
-                url = tab.url,
-                iconPainter = painterResource(drawable.ic_close),
+                iconPainter = painterResource(iconsR.drawable.mozac_ic_cross_24),
                 iconDescription = stringResource(string.remove_tab_from_collection),
                 onIconClick = { onRemove(false) },
             )
@@ -114,30 +124,29 @@ fun CollectionItem(
     }
 }
 
-/**
- * Clips the Composable this applies to such that it cannot draw content / shadows outside it's top bound.
- */
-private fun Modifier.clipTop() = this.then(
-    Modifier.drawWithContent {
-        val paddingPx = Constraints.Infinity.toFloat()
-        clipRect(
-            left = 0f - paddingPx,
-            top = 0f,
-            right = size.width + paddingPx,
-            bottom = size.height + paddingPx,
-        ) {
-            this@drawWithContent.drawContent()
+/** Clips the Composable this applies to such that it cannot draw content / shadows outside it's top bound. */
+private fun Modifier.clipTop() =
+    this.then(
+        Modifier.drawWithContent {
+            val paddingPx = Constraints.Infinity.toFloat()
+            clipRect(
+                left = 0f - paddingPx,
+                top = 0f,
+                right = size.width + paddingPx,
+                bottom = size.height + paddingPx,
+            ) {
+                this@drawWithContent.drawContent()
+            }
         }
-    },
-)
+    )
 
 @Composable
-@LightDarkPreview
+@PreviewLightDark
 private fun TabInCollectionPreview() {
     FirefoxTheme {
         Column {
             CollectionItem(
-                tab = tabPreview,
+                tab = FakeHomepagePreview.tab(),
                 isLastInCollection = false,
                 onClick = {},
                 onRemove = {},
@@ -146,23 +155,11 @@ private fun TabInCollectionPreview() {
             Spacer(Modifier.height(10.dp))
 
             CollectionItem(
-                tab = tabPreview,
+                tab = FakeHomepagePreview.tab(),
                 isLastInCollection = true,
                 onClick = {},
                 onRemove = {},
             )
         }
     }
-}
-
-private val tabPreview = object : Tab {
-    override val id = 2L
-    override val title = "Mozilla-Firefox"
-    override val url = "https://www.mozilla.org/en-US/firefox/whats-new-in-last-version"
-
-    override fun restore(
-        filesDir: File,
-        engine: Engine,
-        restoreSessionId: Boolean,
-    ): RecoverableTab? = null
 }

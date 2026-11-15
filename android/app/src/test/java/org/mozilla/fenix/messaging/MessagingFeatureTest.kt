@@ -6,24 +6,26 @@ package org.mozilla.fenix.messaging
 
 import io.mockk.spyk
 import io.mockk.verify
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import mozilla.components.support.test.rule.MainCoroutineRule
-import org.junit.Rule
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction.MessagingAction
+import org.mozilla.fenix.helpers.lifecycle.TestLifecycleOwner
 
 class MessagingFeatureTest {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @get:Rule
-    val coroutinesTestRule = MainCoroutineRule()
 
     @Test
-    fun `WHEN start is called THEN evaluate messages`() {
+    fun `WHEN onResume is called THEN evaluate message`() = runTest {
         val appStore: AppStore = spyk(AppStore())
-        val binding = MessagingFeature(appStore)
+        val lifecycleOwner = TestLifecycleOwner()
+        val binding =
+            MessagingFeature(
+                appStore = appStore,
+                surface = FenixMessageSurfaceId.HOMESCREEN,
+            )
 
-        binding.start()
+        binding.onResume(lifecycleOwner)
+        testScheduler.advanceUntilIdle()
 
         verify { appStore.dispatch(MessagingAction.Evaluate(FenixMessageSurfaceId.HOMESCREEN)) }
     }

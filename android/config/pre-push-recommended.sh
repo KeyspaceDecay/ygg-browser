@@ -27,10 +27,9 @@ fi
 # - UI tests
 # - android lint (takes a long time to run)
 ./gradlew -q \
-        ktlint \
+        ktfmtCheck \
         detekt \
         assembleDebug \
         assembleDebugAndroidTest \
         mozilla-detekt-rules:test \
-        mozilla-lint-rules:test \
         testDebug

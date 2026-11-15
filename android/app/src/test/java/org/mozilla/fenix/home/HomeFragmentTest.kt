@@ -5,41 +5,23 @@
 package org.mozilla.fenix.home
 
 import android.content.Context
-import android.view.ViewGroup
-import androidx.lifecycle.LifecycleCoroutineScope
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.lifecycleScope
-import io.mockk.Runs
+import android.view.View
 import io.mockk.every
-import io.mockk.just
 import io.mockk.mockk
-import io.mockk.mockkStatic
 import io.mockk.spyk
-import io.mockk.unmockkStatic
 import io.mockk.verify
-import kotlinx.coroutines.CoroutineScope
-import mozilla.components.browser.state.search.SearchEngine
-import mozilla.components.browser.state.state.BrowserState
-import mozilla.components.browser.state.state.SearchState
-import mozilla.components.browser.state.store.BrowserStore
-import mozilla.components.feature.top.sites.TopSite
-import org.junit.Assert.assertEquals
+import kotlin.test.assertNotNull
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mozilla.fenix.FenixApplication
-import org.mozilla.fenix.HomeActivity
-import org.mozilla.fenix.R
 import org.mozilla.fenix.components.Core
 import org.mozilla.fenix.ext.application
 import org.mozilla.fenix.ext.components
-import org.mozilla.fenix.home.HomeFragment.Companion.AMAZON_SPONSORED_TITLE
-import org.mozilla.fenix.home.HomeFragment.Companion.EBAY_SPONSORED_TITLE
-import org.mozilla.fenix.home.HomeFragment.Companion.TOAST_ELEVATION
 import org.mozilla.fenix.utils.Settings
-import org.mozilla.fenix.utils.allowUndo
+import org.mozilla.fenix.wallpapers.Wallpaper
 
 class HomeFragmentTest {
 
@@ -47,12 +29,14 @@ class HomeFragmentTest {
     private lateinit var context: Context
     private lateinit var core: Core
     private lateinit var homeFragment: HomeFragment
+    private lateinit var view: View
 
     @Before
     fun setup() {
         settings = mockk(relaxed = true)
         context = mockk(relaxed = true)
         core = mockk(relaxed = true)
+        view = mockk(relaxed = true)
 
         val fenixApplication: FenixApplication = mockk(relaxed = true)
 
@@ -62,131 +46,58 @@ class HomeFragmentTest {
         every { homeFragment.context } answers { context }
         every { context.components.settings } answers { settings }
         every { context.components.core } answers { core }
+        every { homeFragment.viewLifecycleOwner } returns mockk(relaxed = true)
     }
 
     @Test
-    fun `WHEN getTopSitesConfig is called THEN it returns TopSitesConfig with non-null frecencyConfig`() {
-        every { settings.topSitesMaxLimit } returns 10
+    fun `WHEN isMicrosurveyEnabled is true GIVEN a call to initializeMicrosurveyFeature THEN messagingFeature is initialized and observer is added`() {
+        val lifecycle = homeFragment.viewLifecycleOwner.lifecycle
 
-        val topSitesConfig = homeFragment.getTopSitesConfig()
+        assertNull(homeFragment.messagingFeatureMicrosurvey.get())
 
-        assertNotNull(topSitesConfig.frecencyConfig)
+        homeFragment.initializeMicrosurveyFeature(isMicrosurveyEnabled = true, view = view)
+
+        val feature = homeFragment.messagingFeatureMicrosurvey.get()
+        assertNotNull(feature)
+        verify { lifecycle.addObserver(feature) }
     }
 
     @Test
-    fun `GIVEN a topSitesMaxLimit WHEN getTopSitesConfig is called THEN it returns TopSitesConfig with totalSites = topSitesMaxLimit`() {
-        val topSitesMaxLimit = 10
-        every { settings.topSitesMaxLimit } returns topSitesMaxLimit
+    fun `WHEN isMicrosurveyEnabled is false GIVEN a call to initializeMicrosurveyFeature THEN messagingFeature is not initialized and observer is not added`() {
+        val lifecycle = homeFragment.viewLifecycleOwner.lifecycle
 
-        val topSitesConfig = homeFragment.getTopSitesConfig()
+        assertNull(homeFragment.messagingFeatureMicrosurvey.get())
 
-        assertEquals(topSitesMaxLimit, topSitesConfig.totalSites)
+        homeFragment.initializeMicrosurveyFeature(isMicrosurveyEnabled = false, view = view)
+
+        assertNull(homeFragment.messagingFeatureMicrosurvey.get())
+        verify(exactly = 0) { lifecycle.addObserver(any()) }
     }
 
     @Test
-    fun `GIVEN the selected search engine is set to eBay WHEN getTopSitesConfig is called THEN providerFilter filters the eBay provided top sites`() {
-        val searchEngine: SearchEngine = mockk()
-        val browserStore = BrowserStore(
-            initialState = BrowserState(
-                search = SearchState(
-                    regionSearchEngines = listOf(searchEngine),
-                ),
-            ),
-        )
-
-        every { core.store } returns browserStore
-        every { searchEngine.name } returns EBAY_SPONSORED_TITLE
-
-        val eBayTopSite = TopSite.Provided(1L, EBAY_SPONSORED_TITLE, "eBay.com", "", "", "", 0L)
-        val amazonTopSite = TopSite.Provided(2L, AMAZON_SPONSORED_TITLE, "Amazon.com", "", "", "", 0L)
-        val firefoxTopSite = TopSite.Provided(3L, "Firefox", "mozilla.org", "", "", "", 0L)
-        val providedTopSites = listOf(eBayTopSite, amazonTopSite, firefoxTopSite)
-
-        val topSitesConfig = homeFragment.getTopSitesConfig()
-
-        val filteredProvidedSites = providedTopSites.filter {
-            topSitesConfig.providerConfig?.providerFilter?.invoke(it) ?: true
-        }
-        assertTrue(filteredProvidedSites.containsAll(listOf(amazonTopSite, firefoxTopSite)))
-        assertFalse(filteredProvidedSites.contains(eBayTopSite))
+    fun `GIVEN default wallpaper is set WHEN isEdgeToEdgeBackgroundEnabled is called THEN return false`() {
+        every { settings.currentWallpaperName } returns Wallpaper.DEFAULT
+        assertFalse(homeFragment.isEdgeToEdgeBackgroundEnabled())
     }
 
     @Test
-    fun `WHEN configuration changed THEN menu is dismissed`() {
-        val homeMenuView: HomeMenuView = mockk(relaxed = true)
-        homeFragment.homeMenuView = homeMenuView
-
-        homeFragment.onConfigurationChanged(mockk(relaxed = true))
-
-        verify(exactly = 1) { homeMenuView.dismissMenu() }
-    }
-
-    fun `GIVEN the user is in normal mode WHEN checking if should enable wallpaper THEN return true`() {
-        val activity: HomeActivity = mockk {
-            every { themeManager.currentTheme.isPrivate } returns false
-        }
-        every { homeFragment.activity } returns activity
-
-        assertTrue(homeFragment.shouldEnableWallpaper())
+    fun `GIVEN edgeToEdge is enabled by nimbus and wallpaper is EdgeToEdge WHEN isEdgeToEdgeBackgroundEnabled is called THEN return true`() {
+        every { settings.enableHomepageEdgeToEdgeBackgroundFeature } returns true
+        every { settings.currentWallpaperName } returns Wallpaper.EDGE_TO_EDGE
+        assertTrue(homeFragment.isEdgeToEdgeBackgroundEnabled())
     }
 
     @Test
-    fun `GIVEN the user is in private mode WHEN checking if should enable wallpaper THEN return false`() {
-        val activity: HomeActivity = mockk {
-            every { themeManager.currentTheme.isPrivate } returns true
-        }
-        every { homeFragment.activity } returns activity
-
-        assertFalse(homeFragment.shouldEnableWallpaper())
+    fun `GIVEN edgeToEdge is disabled by nimbus wallpaper is Default WHEN isEdgeToEdgeBackgroundEnabled is called THEN return true`() {
+        every { settings.enableHomepageEdgeToEdgeBackgroundFeature } returns false
+        every { settings.currentWallpaperName } returns Wallpaper.DEFAULT
+        assertFalse(homeFragment.isEdgeToEdgeBackgroundEnabled())
     }
 
     @Test
-    fun `WHEN a pinned top is removed THEN show the undo snackbar`() {
-        try {
-            val topSite = TopSite.Default(
-                id = 1L,
-                title = "Mozilla",
-                url = "https://mozilla.org",
-                null,
-            )
-            mockkStatic("org.mozilla.fenix.utils.UndoKt")
-            mockkStatic("androidx.lifecycle.LifecycleOwnerKt")
-            val view: ViewGroup = mockk(relaxed = true)
-            val lifecycleScope: LifecycleCoroutineScope = mockk(relaxed = true)
-            every { any<LifecycleOwner>().lifecycleScope } returns lifecycleScope
-            every { homeFragment.getString(R.string.snackbar_top_site_removed) } returns "Mocked Removed Top Site"
-            every { homeFragment.getString(R.string.snackbar_deleted_undo) } returns "Mocked Undo Removal"
-            every {
-                any<CoroutineScope>().allowUndo(
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                    any(),
-                )
-            } just Runs
-            every { homeFragment.requireView() } returns view
-
-            homeFragment.showUndoSnackbarForTopSite(topSite)
-
-            verify {
-                lifecycleScope.allowUndo(
-                    view,
-                    "Mocked Removed Top Site",
-                    "Mocked Undo Removal",
-                    any(),
-                    any(),
-                    any(),
-                    TOAST_ELEVATION,
-                    true,
-                )
-            }
-        } finally {
-            unmockkStatic("org.mozilla.fenix.utils.UndoKt")
-            unmockkStatic("androidx.lifecycle.LifecycleOwnerKt")
-        }
+    fun `GIVEN edgeToEdge is disabled by nimbus wallpaper is EdgeToEdge WHEN isEdgeToEdgeBackgroundEnabled is called THEN return true`() {
+        every { settings.enableHomepageEdgeToEdgeBackgroundFeature } returns false
+        every { settings.currentWallpaperName } returns Wallpaper.EDGE_TO_EDGE
+        assertFalse(homeFragment.isEdgeToEdgeBackgroundEnabled())
     }
 }

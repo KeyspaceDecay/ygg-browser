@@ -9,17 +9,18 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
 import mozilla.components.browser.storage.sync.SyncedDeviceTabs
 import mozilla.components.feature.syncedtabs.SyncedTabsFeature
+import mozilla.components.feature.syncedtabs.commands.SyncedTabsCommands
 import mozilla.components.feature.syncedtabs.storage.SyncedTabsStorage
 import mozilla.components.feature.syncedtabs.view.SyncedTabsView
 import mozilla.components.service.fxa.manager.FxaAccountManager
 import mozilla.components.support.base.feature.LifecycleAwareFeature
 import mozilla.components.support.base.observer.Observable
 import mozilla.components.support.base.observer.ObserverRegistry
-import org.mozilla.fenix.tabstray.FloatingActionButtonBinding
-import org.mozilla.fenix.tabstray.TabsTrayAction
-import org.mozilla.fenix.tabstray.TabsTrayStore
+import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.tabstray.ext.toComposeList
 import org.mozilla.fenix.tabstray.ext.toSyncedTabsListItem
+import org.mozilla.fenix.tabstray.redux.action.TabsTrayAction
+import org.mozilla.fenix.tabstray.redux.store.TabsTrayStore
 
 /**
  * TabsTrayFragment delegate to handle all layout updates needed to display synced tabs and any errors.
@@ -28,6 +29,7 @@ import org.mozilla.fenix.tabstray.ext.toSyncedTabsListItem
  * @param context Fragment context.
  * @param navController The controller used to handle any navigation necessary for error scenarios.
  * @param storage An instance of [SyncedTabsStorage] used for retrieving synced tabs.
+ * @param commands An instance of [SyncedTabsCommands] used to send synced tabs commands to other devices.
  * @param accountManager An instance of [FxaAccountManager] used for synced tabs authentication.
  * @param lifecycleOwner View lifecycle owner used to determine when to cancel UI jobs.
  */
@@ -36,16 +38,16 @@ class SyncedTabsIntegration(
     private val context: Context,
     private val navController: NavController,
     storage: SyncedTabsStorage,
+    commands: SyncedTabsCommands,
     accountManager: FxaAccountManager,
     lifecycleOwner: LifecycleOwner,
-) : LifecycleAwareFeature,
-    SyncedTabsView,
-    Observable<SyncedTabsView.Listener> by ObserverRegistry() {
+) : LifecycleAwareFeature, SyncedTabsView, Observable<SyncedTabsView.Listener> by ObserverRegistry() {
 
     private val syncedTabsFeature by lazy {
         SyncedTabsFeature(
             context = context,
             storage = storage,
+            commands = commands,
             accountManager = accountManager,
             view = this,
             lifecycleOwner = lifecycleOwner,
@@ -79,10 +81,11 @@ class SyncedTabsIntegration(
         store.dispatch(TabsTrayAction.UpdateSyncedTabs(listOf(error.toSyncedTabsListItem(context, navController))))
     }
 
-    /**
-     * Do nothing; the UI is handled with [FloatingActionButtonBinding].
-     */
-    override fun startLoading() = Unit
+    override fun startLoading() {
+        if (!store.state.sync.isSyncing) {
+            store.dispatch(TabsTrayAction.SyncNow)
+        }
+    }
 
     override fun stopLoading() {
         store.dispatch(TabsTrayAction.SyncCompleted)
@@ -91,8 +94,14 @@ class SyncedTabsIntegration(
     override fun displaySyncedTabs(syncedTabs: List<SyncedDeviceTabs>) {
         store.dispatch(
             TabsTrayAction.UpdateSyncedTabs(
-                syncedTabs.toComposeList(),
-            ),
+                syncedTabs.toComposeList(
+                    buildSet {
+                        if (context.components.settings.enableCloseSyncedTabs) {
+                            add(SyncedTabsListSupportedFeature.CLOSE_TABS)
+                        }
+                    }
+                )
+            )
         )
     }
 }

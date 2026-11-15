@@ -15,19 +15,29 @@ import kotlinx.coroutines.launch
 import mozilla.components.concept.sync.AccountObserver
 import mozilla.components.concept.sync.AuthType
 import mozilla.components.concept.sync.OAuthAccount
+import mozilla.components.service.fxa.FxaService
+import mozilla.components.service.fxa.manager.SCOPE_PROFILE
+import mozilla.components.service.fxa.manager.SCOPE_SYNC
 import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.GleanMetrics.SyncAuth
 import org.mozilla.fenix.R
+import org.mozilla.fenix.e2e.SystemInsetsPaddedFragment
 import org.mozilla.fenix.ext.getPreferenceKey
 import org.mozilla.fenix.ext.nav
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.showToolbar
 
-class AccountProblemFragment : PreferenceFragmentCompat(), AccountObserver {
+/** Settings screen allowing users to choose what to do in case of problems with their Firefox account. */
+class AccountProblemFragment : PreferenceFragmentCompat(), AccountObserver, SystemInsetsPaddedFragment {
     private val args by navArgs<AccountProblemFragmentArgs>()
 
     private val signInClickListener = Preference.OnPreferenceClickListener {
-        requireComponents.services.accountsAuthFeature.beginAuthentication(requireContext(), args.entrypoint)
+        requireComponents.services.accountsAuthFeature.beginAuthentication(
+            context = requireContext(),
+            entrypoint = args.entrypoint,
+            service = FxaService.Sync.identifier,
+            scopes = setOf(SCOPE_PROFILE, SCOPE_SYNC),
+        )
         SyncAuth.useEmailProblem.record(NoExtras())
         // TODO The sign-in web content populates session history,
         // so pressing "back" after signing in won't take us back into the settings screen, but rather up the
@@ -62,10 +72,8 @@ class AccountProblemFragment : PreferenceFragmentCompat(), AccountObserver {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         setPreferencesFromResource(R.xml.sync_problem, rootKey)
 
-        val preferenceSignIn =
-            findPreference<Preference>(getPreferenceKey(R.string.pref_key_sync_sign_in))
-        val preferenceSignOut =
-            findPreference<Preference>(getPreferenceKey(R.string.pref_key_sign_out))
+        val preferenceSignIn = findPreference<Preference>(getPreferenceKey(R.string.pref_key_sync_sign_in))
+        val preferenceSignOut = findPreference<Preference>(getPreferenceKey(R.string.pref_key_sign_out))
         preferenceSignIn?.onPreferenceClickListener = signInClickListener
         preferenceSignOut?.onPreferenceClickListener = signOutClickListener
     }
@@ -78,8 +86,7 @@ class AccountProblemFragment : PreferenceFragmentCompat(), AccountObserver {
 
     private fun closeFragment() {
         lifecycleScope.launch(Dispatchers.Main) {
-            findNavController()
-                .popBackStack(R.id.accountProblemFragment, true)
+            findNavController().popBackStack(R.id.accountProblemFragment, true)
         }
     }
 }

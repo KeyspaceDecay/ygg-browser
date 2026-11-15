@@ -4,18 +4,19 @@
 
 package org.mozilla.fenix.translations
 
+import kotlin.test.assertIs
 import mozilla.components.concept.engine.translate.Language
 import mozilla.components.concept.engine.translate.TranslationDownloadSize
 import mozilla.components.concept.engine.translate.TranslationError
 import mozilla.components.support.test.robolectric.testContext
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.assertNull
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.R
-import org.mozilla.fenix.helpers.FenixRobolectricTestRunner
+import org.robolectric.RobolectricTestRunner
 
-@RunWith(FenixRobolectricTestRunner::class)
+@RunWith(RobolectricTestRunner::class)
 class TranslationsDialogReducerTest {
 
     @Test
@@ -25,18 +26,20 @@ class TranslationsDialogReducerTest {
 
         val translationsDialogState = TranslationsDialogState(initialTo = spanishLanguage)
 
-        val updatedState = TranslationsDialogReducer.reduce(
-            translationsDialogState,
-            TranslationsDialogAction.UpdateFromSelectedLanguage(englishLanguage),
-        )
+        val updatedState =
+            TranslationsDialogReducer.reduce(
+                translationsDialogState,
+                TranslationsDialogAction.UpdateFromSelectedLanguage(englishLanguage),
+            )
 
         assertEquals(englishLanguage, updatedState.initialFrom)
         assertEquals(PositiveButtonType.Enabled, updatedState.positiveButtonType)
 
-        val updatedStateTwo = TranslationsDialogReducer.reduce(
-            translationsDialogState,
-            TranslationsDialogAction.UpdateFromSelectedLanguage(spanishLanguage),
-        )
+        val updatedStateTwo =
+            TranslationsDialogReducer.reduce(
+                translationsDialogState,
+                TranslationsDialogAction.UpdateFromSelectedLanguage(spanishLanguage),
+            )
 
         assertEquals(PositiveButtonType.Disabled, updatedStateTwo.positiveButtonType)
     }
@@ -48,18 +51,20 @@ class TranslationsDialogReducerTest {
 
         val translationsDialogState = TranslationsDialogState(initialFrom = spanishLanguage)
 
-        val updatedState = TranslationsDialogReducer.reduce(
-            translationsDialogState,
-            TranslationsDialogAction.UpdateToSelectedLanguage(englishLanguage),
-        )
+        val updatedState =
+            TranslationsDialogReducer.reduce(
+                translationsDialogState,
+                TranslationsDialogAction.UpdateToSelectedLanguage(englishLanguage),
+            )
 
         assertEquals(englishLanguage, updatedState.initialTo)
         assertEquals(PositiveButtonType.Enabled, updatedState.positiveButtonType)
 
-        val updatedStateTwo = TranslationsDialogReducer.reduce(
-            translationsDialogState,
-            TranslationsDialogAction.UpdateToSelectedLanguage(spanishLanguage),
-        )
+        val updatedStateTwo =
+            TranslationsDialogReducer.reduce(
+                translationsDialogState,
+                TranslationsDialogAction.UpdateToSelectedLanguage(spanishLanguage),
+            )
 
         assertEquals(PositiveButtonType.Disabled, updatedStateTwo.positiveButtonType)
     }
@@ -71,15 +76,16 @@ class TranslationsDialogReducerTest {
 
         val translationsDialogState = TranslationsDialogState()
 
-        val updatedState = TranslationsDialogReducer.reduce(
-            translationsDialogState,
-            TranslationsDialogAction.UpdateTranslateToLanguages(
-                listOf(
-                    spanishLanguage,
-                    englishLanguage,
+        val updatedState =
+            TranslationsDialogReducer.reduce(
+                translationsDialogState,
+                TranslationsDialogAction.UpdateTranslateToLanguages(
+                    listOf(
+                        spanishLanguage,
+                        englishLanguage,
+                    )
                 ),
-            ),
-        )
+            )
 
         assertEquals(listOf(spanishLanguage, englishLanguage), updatedState.toLanguages)
     }
@@ -91,15 +97,16 @@ class TranslationsDialogReducerTest {
 
         val translationsDialogState = TranslationsDialogState()
 
-        val updatedState = TranslationsDialogReducer.reduce(
-            translationsDialogState,
-            TranslationsDialogAction.UpdateTranslateFromLanguages(
-                listOf(
-                    spanishLanguage,
-                    englishLanguage,
+        val updatedState =
+            TranslationsDialogReducer.reduce(
+                translationsDialogState,
+                TranslationsDialogAction.UpdateTranslateFromLanguages(
+                    listOf(
+                        spanishLanguage,
+                        englishLanguage,
+                    )
                 ),
-            ),
-        )
+            )
 
         assertEquals(listOf(spanishLanguage, englishLanguage), updatedState.fromLanguages)
     }
@@ -108,10 +115,11 @@ class TranslationsDialogReducerTest {
     fun `WHEN the reducer is called for DismissDialog THEN a new state with updated dismiss dialog is returned`() {
         val translationsDialogState = TranslationsDialogState()
 
-        val updatedState = TranslationsDialogReducer.reduce(
-            translationsDialogState,
-            TranslationsDialogAction.DismissDialog(DismissDialogState.Dismiss),
-        )
+        val updatedState =
+            TranslationsDialogReducer.reduce(
+                translationsDialogState,
+                TranslationsDialogAction.DismissDialog(DismissDialogState.Dismiss),
+            )
 
         assertEquals(DismissDialogState.Dismiss, updatedState.dismissDialogState)
     }
@@ -120,83 +128,52 @@ class TranslationsDialogReducerTest {
     fun `WHEN the reducer is called for UpdateInProgress THEN a new state with translation in progress is returned`() {
         val translationsDialogState = TranslationsDialogState()
 
-        val updatedState = TranslationsDialogReducer.reduce(
-            translationsDialogState,
-            TranslationsDialogAction.UpdateTranslationInProgress(true),
-        )
+        val updatedState =
+            TranslationsDialogReducer.reduce(
+                translationsDialogState,
+                TranslationsDialogAction.UpdateTranslationInProgress(true),
+            )
 
         assertEquals(true, updatedState.isTranslationInProgress)
         assertEquals(PositiveButtonType.InProgress, updatedState.positiveButtonType)
     }
 
     @Test
-    fun `WHEN the reducer is called for InitTranslationsDialog THEN a new state for PositiveButtonType is returned`() {
-        val translationsDialogState = TranslationsDialogState()
-
-        val updatedState = TranslationsDialogReducer.reduce(
-            translationsDialogState,
-            TranslationsDialogAction.InitTranslationsDialog,
-        )
-
-        assertEquals(PositiveButtonType.Disabled, updatedState.positiveButtonType)
-
-        val spanishLanguage = Language("es", "Spanish")
-        val englishLanguage = Language("en", "English")
-        val translationsDialogStateTwo = TranslationsDialogState(
-            initialFrom = spanishLanguage,
-            initialTo = englishLanguage,
-            positiveButtonType = PositiveButtonType.Enabled,
-        )
-
-        val updatedStateTwo = TranslationsDialogReducer.reduce(
-            translationsDialogStateTwo,
-            TranslationsDialogAction.InitTranslationsDialog,
-        )
-
-        assertEquals(PositiveButtonType.Enabled, updatedStateTwo.positiveButtonType)
-    }
-
-    @Test
     fun `WHEN the reducer is called for UpdateTranslationError THEN a new state with translation error is returned`() {
         val translationsDialogState = TranslationsDialogState()
 
-        val updatedState = TranslationsDialogReducer.reduce(
-            translationsDialogState,
-            TranslationsDialogAction.UpdateTranslationError(
-                translationError = TranslationError.LanguageNotSupportedError(
-                    null,
+        val updatedState =
+            TranslationsDialogReducer.reduce(
+                translationsDialogState,
+                TranslationsDialogAction.UpdateTranslationError(
+                    translationError = TranslationError.LanguageNotSupportedError(null),
+                    documentLangDisplayName = "German",
                 ),
-                documentLangDisplayName = "German",
-            ),
-        )
+            )
 
-        assertTrue(updatedState.error is TranslationError.LanguageNotSupportedError)
-        assertEquals(PositiveButtonType.Disabled, updatedState.positiveButtonType)
+        assertIs<TranslationError.LanguageNotSupportedError>(updatedState.error)
+        assertNull(updatedState.positiveButtonType)
         assertEquals(updatedState.documentLangDisplayName, "German")
 
-        val updatedStateTwo = TranslationsDialogReducer.reduce(
-            translationsDialogState,
-            TranslationsDialogAction.UpdateTranslationError(
-                TranslationError.CouldNotLoadLanguagesError(
-                    null,
-                ),
-            ),
-        )
+        val updatedStateTwo =
+            TranslationsDialogReducer.reduce(
+                translationsDialogState,
+                TranslationsDialogAction.UpdateTranslationError(TranslationError.CouldNotLoadLanguagesError(null)),
+            )
 
-        assertTrue(updatedStateTwo.error is TranslationError.CouldNotLoadLanguagesError)
-        assertEquals(PositiveButtonType.Enabled, updatedStateTwo.positiveButtonType)
+        assertIs<TranslationError.CouldNotLoadLanguagesError>(updatedStateTwo.error)
+        assertNull(updatedStateTwo.positiveButtonType)
     }
 
     @Test
     fun `WHEN the reducer is called for UpdateTranslated THEN a new state with translation translated is returned`() {
         val translationsDialogState = TranslationsDialogState()
 
-        val updatedState = TranslationsDialogReducer.reduce(
-            translationsDialogState,
-            TranslationsDialogAction.UpdateTranslated(
-                true,
-            ),
-        )
+        val updatedState =
+            TranslationsDialogReducer.reduce(
+                translationsDialogState,
+                TranslationsDialogAction.UpdateTranslated(true),
+            )
 
         assertEquals(PositiveButtonType.Disabled, updatedState.positiveButtonType)
         assertEquals(true, updatedState.isTranslated)
@@ -209,16 +186,17 @@ class TranslationsDialogReducerTest {
         val translationsDialogState =
             TranslationsDialogState(initialTo = englishLanguage, initialFrom = spanishLanguage)
 
-        val updatedState = TranslationsDialogReducer.reduce(
-            translationsDialogState,
-            TranslationsDialogAction.UpdateTranslatedPageTitle(
-                testContext.getString(
-                    R.string.translations_bottom_sheet_title_translation_completed,
-                    spanishLanguage.localizedDisplayName,
-                    englishLanguage.localizedDisplayName,
+        val updatedState =
+            TranslationsDialogReducer.reduce(
+                translationsDialogState,
+                TranslationsDialogAction.UpdateTranslatedPageTitle(
+                    testContext.getString(
+                        R.string.translations_bottom_sheet_title_translation_completed,
+                        spanishLanguage.localizedDisplayName,
+                        englishLanguage.localizedDisplayName,
+                    )
                 ),
-            ),
-        )
+            )
 
         assertEquals(
             testContext.getString(
@@ -236,17 +214,17 @@ class TranslationsDialogReducerTest {
         val englishLanguage = Language("en", "English")
         val translationsDialogState =
             TranslationsDialogState(initialTo = englishLanguage, initialFrom = spanishLanguage)
-        val translationDownloadSize = TranslationDownloadSize(
-            fromLanguage = spanishLanguage,
-            toLanguage = englishLanguage,
-            size = 1000L,
-        )
-        val updatedState = TranslationsDialogReducer.reduce(
-            translationsDialogState,
-            TranslationsDialogAction.UpdateDownloadTranslationDownloadSize(
-                translationDownloadSize,
-            ),
-        )
+        val translationDownloadSize =
+            TranslationDownloadSize(
+                fromLanguage = spanishLanguage,
+                toLanguage = englishLanguage,
+                size = 1000L,
+            )
+        val updatedState =
+            TranslationsDialogReducer.reduce(
+                translationsDialogState,
+                TranslationsDialogAction.UpdateDownloadTranslationDownloadSize(translationDownloadSize),
+            )
 
         assertEquals(
             translationDownloadSize,
@@ -260,17 +238,17 @@ class TranslationsDialogReducerTest {
         val englishLanguage = Language("en", "English")
         val translationsDialogState =
             TranslationsDialogState(initialTo = englishLanguage, initialFrom = spanishLanguage)
-        val translationDownloadSize = TranslationDownloadSize(
-            fromLanguage = englishLanguage,
-            toLanguage = spanishLanguage,
-            size = 0L,
-        )
-        val updatedState = TranslationsDialogReducer.reduce(
-            translationsDialogState,
-            TranslationsDialogAction.UpdateDownloadTranslationDownloadSize(
-                translationDownloadSize,
-            ),
-        )
+        val translationDownloadSize =
+            TranslationDownloadSize(
+                fromLanguage = englishLanguage,
+                toLanguage = spanishLanguage,
+                size = 0L,
+            )
+        val updatedState =
+            TranslationsDialogReducer.reduce(
+                translationsDialogState,
+                TranslationsDialogAction.UpdateDownloadTranslationDownloadSize(translationDownloadSize),
+            )
 
         assertEquals(
             null,

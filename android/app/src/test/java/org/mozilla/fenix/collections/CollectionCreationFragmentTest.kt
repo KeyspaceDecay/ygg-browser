@@ -7,6 +7,7 @@ package org.mozilla.fenix.collections
 import io.mockk.MockKAnnotations
 import io.mockk.every
 import io.mockk.mockk
+import kotlin.test.assertNotNull
 import kotlinx.coroutines.CompletableDeferred
 import mozilla.components.browser.state.state.BrowserState
 import mozilla.components.browser.state.state.createTab
@@ -14,31 +15,28 @@ import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.lib.publicsuffixlist.PublicSuffixList
 import mozilla.components.support.test.robolectric.createAddedTestFragment
 import mozilla.components.support.test.robolectric.testContext
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.components.TabCollectionStorage
 import org.mozilla.fenix.ext.components
-import org.mozilla.fenix.helpers.FenixRobolectricTestRunner
 import org.mozilla.fenix.helpers.perf.TestStrictModeManager
+import org.robolectric.RobolectricTestRunner
 
 private const val URL_MOZILLA = "www.mozilla.org"
 private const val SESSION_ID_MOZILLA = "0"
 private const val URL_BCC = "www.bcc.co.uk"
 private const val SESSION_ID_BCC = "1"
 
-@RunWith(FenixRobolectricTestRunner::class)
+@RunWith(RobolectricTestRunner::class)
 class CollectionCreationFragmentTest {
 
     private val publicSuffixList = mockk<PublicSuffixList>(relaxed = true)
 
     private val sessionMozilla = createTab(URL_MOZILLA, id = SESSION_ID_MOZILLA)
     private val sessionBcc = createTab(URL_BCC, id = SESSION_ID_BCC)
-    private val state = BrowserState(
-        tabs = listOf(sessionMozilla, sessionBcc),
-    )
+    private val state = BrowserState(tabs = listOf(sessionMozilla, sessionBcc))
 
     @Before
     fun before() {
@@ -52,15 +50,15 @@ class CollectionCreationFragmentTest {
     fun `creation dialog shows and can be dismissed`() {
         every { testContext.components.analytics } returns mockk(relaxed = true)
         every { testContext.components.core.store } returns BrowserStore(state)
-        every { testContext.components.core.tabCollectionStorage } returns TabCollectionStorage(
-            testContext,
-            TestStrictModeManager(),
-        )
+        every { testContext.components.core.tabCollectionStorage } returns
+            TabCollectionStorage(
+                testContext,
+                TestStrictModeManager(),
+            )
         val fragment = createAddedTestFragment {
             CollectionCreationFragment().apply {
-                arguments = CollectionCreationFragmentArgs(
-                    saveCollectionStep = SaveCollectionStep.SelectTabs,
-                ).toBundle()
+                arguments =
+                    CollectionCreationFragmentArgs(saveCollectionStep = SaveCollectionStep.SelectTabs).toBundle()
             }
         }
 

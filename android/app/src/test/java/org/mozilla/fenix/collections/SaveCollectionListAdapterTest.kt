@@ -20,9 +20,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.databinding.CollectionsListItemBinding
 import org.mozilla.fenix.ext.components
-import org.mozilla.fenix.helpers.FenixRobolectricTestRunner
+import org.robolectric.RobolectricTestRunner
 
-@RunWith(FenixRobolectricTestRunner::class)
+@RunWith(RobolectricTestRunner::class)
 class SaveCollectionListAdapterTest {
 
     private lateinit var parent: ViewGroup
@@ -33,7 +33,7 @@ class SaveCollectionListAdapterTest {
     fun setup() {
         parent = FrameLayout(testContext)
         interactor = mockk()
-        adapter = SaveCollectionListAdapter(interactor)
+        adapter = SaveCollectionListAdapter { interactor.selectCollection(it, emptyList()) }
 
         every { interactor.selectCollection(any(), any()) } just Runs
     }
@@ -44,32 +44,28 @@ class SaveCollectionListAdapterTest {
 
         assertEquals(0, adapter.itemCount)
 
-        adapter.updateData(
-            tabCollections = listOf(collection),
-            selectedTabs = emptySet(),
-        )
+        adapter.submitList(listOf(collection))
         assertEquals(1, adapter.itemCount)
     }
 
     @Test
     fun `creates and binds viewholder`() {
         every { testContext.components.publicSuffixList } returns PublicSuffixList(testContext)
-        val collection = mockk<TabCollection> {
-            every { id } returns 0L
-            every { title } returns "Collection"
-            every { tabs } returns listOf(
-                mockk {
-                    every { url } returns "https://mozilla.org"
-                },
-                mockk {
-                    every { url } returns "https://firefox.com"
-                },
-            )
-        }
-        adapter.updateData(
-            tabCollections = listOf(collection),
-            selectedTabs = emptySet(),
-        )
+        val collection =
+            mockk<TabCollection> {
+                every { id } returns 0L
+                every { title } returns "Collection"
+                every { tabs } returns
+                    listOf(
+                        mockk {
+                            every { url } returns "https://mozilla.org"
+                        },
+                        mockk {
+                            every { url } returns "https://firefox.com"
+                        },
+                    )
+            }
+        adapter.submitList(listOf(collection))
 
         val holder = adapter.createViewHolder(parent, 0)
         adapter.bindViewHolder(holder, 0)

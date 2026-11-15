@@ -11,24 +11,22 @@ import mozilla.components.browser.state.action.HistoryMetadataAction
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.concept.storage.HistoryMetadataStorage
 import mozilla.components.feature.tabs.TabsUseCases.SelectOrAddUseCase
-import mozilla.components.service.glean.private.NoExtras
+import mozilla.telemetry.glean.private.NoExtras
 import org.mozilla.fenix.GleanMetrics.RecentSearches
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.components.appstate.AppAction
+import org.mozilla.fenix.components.usecases.FenixBrowserUseCases
 import org.mozilla.fenix.home.HomeFragmentDirections
 import org.mozilla.fenix.home.recentvisits.RecentlyVisitedItem.RecentHistoryGroup
 import org.mozilla.fenix.home.recentvisits.RecentlyVisitedItem.RecentHistoryHighlight
 import org.mozilla.fenix.library.history.toHistoryMetadata
+import org.mozilla.fenix.utils.Settings
 
-/**
- * All possible updates following user interactions with the "Recent visits" section from the Home screen.
- */
+/** All possible updates following user interactions with the "Recent visits" section from the Home screen. */
 interface RecentVisitsController {
 
-    /**
-     * Callback for when the "Show all" link is clicked.
-     */
+    /** Callback for when the "Show all" link is clicked. */
     fun handleHistoryShowAllClicked()
 
     /**
@@ -60,25 +58,21 @@ interface RecentVisitsController {
     fun handleRemoveRecentHistoryHighlight(highlightUrl: String)
 }
 
-/**
- * The default implementation of [RecentVisitsController].
- */
+/** The default implementation of [RecentVisitsController]. */
 class DefaultRecentVisitsController(
     private val store: BrowserStore,
     private val appStore: AppStore,
+    private val settings: Settings,
+    private val fenixBrowserUseCases: FenixBrowserUseCases,
     private val selectOrAddTabUseCase: SelectOrAddUseCase,
     private val navController: NavController,
     private val storage: HistoryMetadataStorage,
     private val scope: CoroutineScope,
 ) : RecentVisitsController {
 
-    /**
-     * Shows the history fragment.
-     */
+    /** Shows the history fragment. */
     override fun handleHistoryShowAllClicked() {
-        navController.navigate(
-            HomeFragmentDirections.actionGlobalHistoryFragment(),
-        )
+        navController.navigate(HomeFragmentDirections.actionGlobalHistoryFragment())
     }
 
     /**
@@ -90,9 +84,11 @@ class DefaultRecentVisitsController(
         navController.navigate(
             HomeFragmentDirections.actionGlobalHistoryMetadataGroup(
                 title = recentHistoryGroup.title,
-                historyMetadataItems = recentHistoryGroup.historyMetadata
-                    .mapIndexed { index, item -> item.toHistoryMetadata(index) }.toTypedArray(),
-            ),
+                historyMetadataItems =
+                    recentHistoryGroup.historyMetadata
+                        .mapIndexed { index, item -> item.toHistoryMetadata(index) }
+                        .toTypedArray(),
+            )
         )
     }
 
@@ -115,13 +111,22 @@ class DefaultRecentVisitsController(
     }
 
     /**
-     * Switch to an already open tab for [recentHistoryHighlight] if one exists or
-     * create a new tab in which to load this item's URL.
+     * Switch to an already open tab for [recentHistoryHighlight] if one exists or create a new tab in which to load
+     * this item's URL.
      *
      * @param recentHistoryHighlight the just clicked [RecentHistoryHighlight] to open in browser.
      */
     override fun handleRecentHistoryHighlightClicked(recentHistoryHighlight: RecentHistoryHighlight) {
-        selectOrAddTabUseCase.invoke(recentHistoryHighlight.url)
+        if (settings.enableHomepageAsNewTab) {
+            fenixBrowserUseCases.loadUrlOrSearch(
+                searchTermOrURL = recentHistoryHighlight.url,
+                newTab = false,
+                private = false,
+            )
+        } else {
+            selectOrAddTabUseCase.invoke(recentHistoryHighlight.url)
+        }
+
         navController.navigate(R.id.browserFragment)
     }
 

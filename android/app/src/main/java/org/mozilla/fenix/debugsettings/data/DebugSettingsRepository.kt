@@ -15,21 +15,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-/**
- * [DataStore] for accessing debugging settings.
- */
+/** [DataStore] for accessing debugging settings. */
 private val Context.debugSettings: DataStore<Preferences> by preferencesDataStore(name = "debug_settings")
 
 private val debugDrawerEnabledKey = booleanPreferencesKey("debug_drawer_enabled")
 
-/**
- * Cache for accessing any settings related to debugging.
- */
+/** Cache for accessing any settings related to debugging. */
 interface DebugSettingsRepository {
 
-    /**
-     * [Flow] for checking whether the Debug Drawer is enabled.
-     */
+    /** [Flow] for checking whether the Debug Drawer is enabled. */
     val debugDrawerEnabled: Flow<Boolean>
 
     /**
@@ -55,6 +49,7 @@ class DefaultDebugSettingsRepository(
 
     override val debugDrawerEnabled: Flow<Boolean> =
         dataStore.data.map { preferences ->
+            // On first lookup, when value does not exist yet, we default to true in debug mode
             preferences[debugDrawerEnabledKey] ?: false
         }
 

@@ -4,6 +4,8 @@
 
 package org.mozilla.fenix.browser.browsingmode
 
-data class SimpleBrowsingModeManager(
-    override var mode: BrowsingMode,
-) : BrowsingModeManager
+import android.content.Intent
+
+data class SimpleBrowsingModeManager(override var mode: BrowsingMode) : BrowsingModeManager {
+    override fun updateMode(intent: Intent?) = Unit
+}

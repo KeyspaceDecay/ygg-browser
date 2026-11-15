@@ -2,48 +2,53 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-// Needed until bug 1884527 is fixed.
-@file:Suppress("DEPRECATION")
-
 package org.mozilla.fenix.gecko
 
 import android.content.Context
 import androidx.annotation.VisibleForTesting
+import kotlinx.coroutines.CoroutineScope
 import mozilla.components.browser.engine.gecko.autofill.GeckoAutocompleteStorageDelegate
+import mozilla.components.browser.engine.gecko.crash.GeckoCrashPullDelegate
 import mozilla.components.browser.engine.gecko.ext.toContentBlockingSetting
-import mozilla.components.browser.engine.gecko.glean.GeckoAdapter
 import mozilla.components.concept.engine.EngineSession.TrackingProtectionPolicy
 import mozilla.components.concept.storage.CreditCardsAddressesStorage
 import mozilla.components.concept.storage.LoginsStorage
 import mozilla.components.experiment.NimbusExperimentDelegate
 import mozilla.components.lib.crash.handler.CrashHandlerService
+import mozilla.components.lib.crash.store.CrashAction
 import mozilla.components.service.sync.autofill.GeckoCreditCardsAddressesStorageDelegate
 import mozilla.components.service.sync.logins.GeckoLoginStorageDelegate
 import org.mozilla.fenix.Config
+import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.ext.components
-import org.mozilla.fenix.ext.settings
-import org.mozilla.geckoview.ContentBlocking
-import org.mozilla.geckoview.ContentBlocking.SafeBrowsingProvider
+import org.mozilla.fenix.nimbus.FxNimbus
 import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoRuntimeSettings
 
 object GeckoProvider {
     private var runtime: GeckoRuntime? = null
-    private const val CN_UPDATE_URL =
-        "https://sb.firefox.com.cn/downloads?client=SAFEBROWSING_ID&appver=%MAJOR_VERSION%&pver=2.2"
-    private const val CN_GET_HASH_URL =
-        "https://sb.firefox.com.cn/gethash?client=SAFEBROWSING_ID&appver=%MAJOR_VERSION%&pver=2.2"
 
+    /**
+     * Gets the existing [GeckoRuntime] instance or creates a new one if it hasn't been initialized. This method is
+     * synchronized to ensure that only a single instance of the runtime is created.
+     *
+     * @param context The application context used to initialize the runtime and its settings.
+     * @param autofillStorage Lazy provider for credit card and address storage.
+     * @param loginStorage Lazy provider for login and password storage.
+     * @param trackingProtectionPolicy The policy defining how tracking protection should be configured.
+     * @param applicationScope The [CoroutineScope] used for background operations within the autocomplete delegate.
+     * @return The singleton [GeckoRuntime] instance.
+     */
     @Synchronized
     fun getOrCreateRuntime(
         context: Context,
         autofillStorage: Lazy<CreditCardsAddressesStorage>,
         loginStorage: Lazy<LoginsStorage>,
         trackingProtectionPolicy: TrackingProtectionPolicy,
+        applicationScope: CoroutineScope,
     ): GeckoRuntime {
         if (runtime == null) {
-            runtime =
-                createRuntime(context, autofillStorage, loginStorage, trackingProtectionPolicy)
+            runtime = createRuntime(context, autofillStorage, loginStorage, trackingProtectionPolicy, applicationScope)
         }
 
         return runtime!!
@@ -54,6 +59,7 @@ object GeckoProvider {
         autofillStorage: Lazy<CreditCardsAddressesStorage>,
         loginStorage: Lazy<LoginsStorage>,
         policy: TrackingProtectionPolicy,
+        applicationScope: CoroutineScope,
     ): GeckoRuntime {
         val runtimeSettings = createRuntimeSettings(context, policy)
 
@@ -64,41 +70,30 @@ object GeckoProvider {
             runtimeSettings.fontSizeFactor = fontSize
         }
 
-        // Add safebrowsing providers for China
-        if (Config.channel.isMozillaOnline) {
-            val mozcn = SafeBrowsingProvider
-                .withName("mozcn")
-                .version("2.2")
-                .lists("m6eb-phish-shavar", "m6ib-phish-shavar")
-                .updateUrl(CN_UPDATE_URL)
-                .getHashUrl(CN_GET_HASH_URL)
-                .build()
-
-            runtimeSettings.contentBlocking.setSafeBrowsingProviders(
-                mozcn,
-                // Keep the existing configuration
-                ContentBlocking.GOOGLE_SAFE_BROWSING_PROVIDER,
-                ContentBlocking.GOOGLE_LEGACY_SAFE_BROWSING_PROVIDER,
-            )
-
-            runtimeSettings.contentBlocking.setSafeBrowsingPhishingTable(
-                "m6eb-phish-shavar",
-                "m6ib-phish-shavar",
-                // Existing configuration
-                "goog-phish-proto",
-            )
-        }
-
         val geckoRuntime = GeckoRuntime.create(context, runtimeSettings)
 
-        geckoRuntime.autocompleteStorageDelegate = GeckoAutocompleteStorageDelegate(
-            GeckoCreditCardsAddressesStorageDelegate(
-                storage = autofillStorage,
-                isCreditCardAutofillEnabled = { context.settings().shouldAutofillCreditCardDetails },
-                isAddressAutofillEnabled = { context.settings().shouldAutofillAddressDetails },
-            ),
-            GeckoLoginStorageDelegate(loginStorage),
-        )
+        geckoRuntime.autocompleteStorageDelegate =
+            GeckoAutocompleteStorageDelegate(
+                GeckoCreditCardsAddressesStorageDelegate(
+                    storage = autofillStorage,
+                    isCreditCardAutofillEnabled = { context.components.settings.shouldAutofillCreditCardDetails },
+                    isAddressAutofillEnabled = { context.components.settings.shouldAutofillAddressDetails },
+                ),
+                GeckoLoginStorageDelegate(
+                    loginStorage = loginStorage,
+                    isLoginAutofillEnabled = { context.components.settings.shouldAutofillLogins },
+                ),
+                applicationScope = applicationScope,
+            )
+
+        geckoRuntime.crashPullDelegate =
+            GeckoCrashPullDelegate(
+                dispatcher = { crashIDs ->
+                    context.components.appStore.dispatch(
+                        AppAction.CrashActionWrapper(CrashAction.CheckDeferred(crashIDs.toList()))
+                    )
+                }
+            )
 
         return geckoRuntime
     }
@@ -108,43 +103,53 @@ object GeckoProvider {
         context: Context,
         policy: TrackingProtectionPolicy,
     ): GeckoRuntimeSettings {
-        val builder = GeckoRuntimeSettings.Builder()
-            .crashHandler(CrashHandlerService::class.java)
-            .telemetryDelegate(GeckoAdapter())
-            .experimentDelegate(NimbusExperimentDelegate())
+        val builder =
+            GeckoRuntimeSettings.Builder()
+                .crashHandler(CrashHandlerService::class.java)
+                .experimentDelegate(NimbusExperimentDelegate())
 
         // Yggdrasil: apply SOCKS proxy config (network.proxy.*) if enabled
         if (org.mozilla.fenix.ygg.YggProxy.isEnabledConfigPresent(context)) {
             builder.configFile(org.mozilla.fenix.ygg.YggProxy.configPath(context).absolutePath)
         }
 
-        return builder
+        builder
             .contentBlocking(
-                policy.toContentBlockingSetting(
-                    cookieBannerHandlingMode = context.settings().getCookieBannerHandling(),
-                    cookieBannerHandlingModePrivateBrowsing = context.settings()
-                        .getCookieBannerHandlingPrivateMode(),
-                    cookieBannerHandlingDetectOnlyMode =
-                    context.settings().shouldEnableCookieBannerDetectOnly,
-                    cookieBannerGlobalRulesEnabled =
-                    context.settings().shouldEnableCookieBannerGlobalRules,
-                    cookieBannerGlobalRulesSubFramesEnabled =
-                    context.settings().shouldEnableCookieBannerGlobalRulesSubFrame,
-                    queryParameterStripping =
-                    context.settings().shouldEnableQueryParameterStripping,
-                    queryParameterStrippingPrivateBrowsing =
-                    context.settings().shouldEnableQueryParameterStrippingPrivateBrowsing,
-                    queryParameterStrippingAllowList =
-                    context.settings().queryParameterStrippingAllowList,
-                    queryParameterStrippingStripList =
-                    context.settings().queryParameterStrippingStripList,
-                ),
-            )
-            .consoleOutput(context.components.settings.enableGeckoLogs)
-            .debugLogging(Config.channel.isDebug || context.components.settings.enableGeckoLogs)
-            .aboutConfigEnabled(Config.channel.isBeta || Config.channel.isNightlyOrDebug)
-            .extensionsProcessEnabled(true)
-            .extensionsWebAPIEnabled(true)
-            .build()
+                    policy.toContentBlockingSetting(
+                        queryParameterStripping = false,
+                        queryParameterStrippingPrivateBrowsing = false,
+                        queryParameterStrippingAllowList = "",
+                        queryParameterStrippingStripList = "",
+                        allowListBaselineTrackingProtection =
+                            context.components.settings.strictAllowListBaselineTrackingProtection,
+                        allowListConvenienceTrackingProtection =
+                            context.components.settings.strictAllowListConvenienceTrackingProtection,
+                        safeBrowsingGlobalCacheEnabled = Config.channel.isNightlyOrDebug,
+                        safeBrowsingRealTimeEnabled = Config.channel.isNightlyOrDebug,
+                        safeBrowsingRealTimeSimulationEnabled = Config.channel.isNightlyOrDebug,
+                        safeBrowsingRealTimeSimulationHitProbability = 5,
+                        safeBrowsingRealTimeSimulationCacheTTLSec = 300,
+                        safeBrowsingRealTimeSimulationNegativeCacheEnabled = false,
+                        safeBrowsingRealTimeSimulationNegativeCacheTTLSec = 300,
+                    )
+                )
+                .consoleOutput(context.components.settings.enableGeckoLogs)
+                .debugLogging(Config.channel.isDebug || context.components.settings.enableGeckoLogs)
+                .aboutConfigEnabled(true)
+                .extensionsProcessEnabled(true)
+                .extensionsWebAPIEnabled(true)
+                .translationsOfferPopup(context.components.settings.offerTranslation)
+                .crashPullNeverShowAgain(context.components.settings.crashPullNeverShowAgain)
+                .setSameDocumentNavigationOverridesLoadType(
+                    FxNimbus.features.sameDocumentNavigationOverridesLoadType.value().enabled
+                )
+                .setSameDocumentNavigationOverridesLoadTypeForceDisable(
+                    FxNimbus.features.sameDocumentNavigationOverridesLoadType.value().forceDisableUri
+                )
+                .isolatedProcessEnabled(context.components.settings.isIsolatedProcessEnabled)
+                .appZygoteProcessEnabled(context.components.settings.isAppZygoteEnabled)
+                .fissionEnabled(context.components.settings.isFissionEnabled)
+
+        return builder.build()
     }
 }

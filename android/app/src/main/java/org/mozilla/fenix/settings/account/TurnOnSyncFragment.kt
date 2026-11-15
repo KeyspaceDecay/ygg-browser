@@ -17,24 +17,27 @@ import androidx.navigation.fragment.navArgs
 import mozilla.components.concept.sync.AccountObserver
 import mozilla.components.concept.sync.AuthType
 import mozilla.components.concept.sync.OAuthAccount
+import mozilla.components.service.fxa.FxaService
+import mozilla.components.service.fxa.manager.SCOPE_PROFILE
+import mozilla.components.service.fxa.manager.SCOPE_SYNC
 import mozilla.components.support.ktx.android.content.hasCamera
 import mozilla.components.support.ktx.android.content.isPermissionGranted
 import mozilla.components.support.ktx.android.view.hideKeyboard
 import mozilla.telemetry.glean.private.NoExtras
-import org.mozilla.fenix.Config
 import org.mozilla.fenix.GleanMetrics.SyncAuth
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
-import org.mozilla.fenix.components.FenixSnackbar
+import org.mozilla.fenix.components.appstate.AppAction
 import org.mozilla.fenix.databinding.FragmentTurnOnSyncBinding
+import org.mozilla.fenix.e2e.SystemInsetsPaddedFragment
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.increaseTapArea
 import org.mozilla.fenix.ext.navigateWithBreadcrumb
 import org.mozilla.fenix.ext.requireComponents
-import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.ext.showToolbar
 
-class TurnOnSyncFragment : Fragment(), AccountObserver {
+/** Settings screen allowing users to log into their Firefox account. */
+class TurnOnSyncFragment : Fragment(), AccountObserver, SystemInsetsPaddedFragment {
 
     private val args by navArgs<TurnOnSyncFragmentArgs>()
     private lateinit var interactor: DefaultSyncInteractor
@@ -47,7 +50,7 @@ class TurnOnSyncFragment : Fragment(), AccountObserver {
     }
 
     private val paringClickListener = View.OnClickListener {
-        if (requireContext().settings().shouldShowCameraPermissionPrompt) {
+        if (requireComponents.settings.shouldShowCameraPermissionPrompt) {
             navigateToPairFragment()
         } else {
             if (requireContext().isPermissionGranted(Manifest.permission.CAMERA)) {
@@ -58,23 +61,25 @@ class TurnOnSyncFragment : Fragment(), AccountObserver {
             }
         }
         view?.hideKeyboard()
-        requireContext().settings().setCameraPermissionNeededState = false
+        requireComponents.settings.setCameraPermissionNeededState = false
     }
 
     private var _binding: FragmentTurnOnSyncBinding? = null
-    private val binding get() = _binding!!
+    private val binding
+        get() = _binding!!
 
     private fun navigateToPairFragment() {
-        val directions = TurnOnSyncFragmentDirections.actionTurnOnSyncFragmentToPairFragment(
-            entrypoint = args.entrypoint,
-        )
+        val directions =
+            TurnOnSyncFragmentDirections.actionTurnOnSyncFragmentToPairFragment(entrypoint = args.entrypoint)
         context?.let {
-            requireView().findNavController().navigateWithBreadcrumb(
-                directions = directions,
-                navigateFrom = "TurnOnSyncFragment",
-                navigateTo = "ActionTurnOnSyncFragmentToPairFragment",
-                crashReporter = it.components.analytics.crashReporter,
-            )
+            requireView()
+                .findNavController()
+                .navigateWithBreadcrumb(
+                    directions = directions,
+                    navigateFrom = "TurnOnSyncFragment",
+                    navigateTo = "ActionTurnOnSyncFragmentToPairFragment",
+                    crashReporter = it.components.analytics.crashReporter,
+                )
         }
         SyncAuth.scanPairing.record(NoExtras())
     }
@@ -105,8 +110,8 @@ class TurnOnSyncFragment : Fragment(), AccountObserver {
     override fun onResume() {
         super.onResume()
 
-        if (pairWithEmailStarted ||
-            requireComponents.backgroundServices.accountManager.authenticatedAccount() != null
+        if (
+            pairWithEmailStarted || requireComponents.backgroundServices.accountManager.authenticatedAccount() != null
         ) {
             findNavController().popBackStack()
             return
@@ -117,7 +122,7 @@ class TurnOnSyncFragment : Fragment(), AccountObserver {
             pairWithEmailStarted = true
         } else {
             requireComponents.backgroundServices.accountManager.register(this, owner = this)
-            showToolbar(getString(R.string.preferences_sync_2))
+            showToolbar(getString(R.string.preferences_sign_in))
         }
     }
 
@@ -130,25 +135,21 @@ class TurnOnSyncFragment : Fragment(), AccountObserver {
 
         binding.signInScanButton.setOnClickListener(paringClickListener)
         binding.signInEmailButton.setOnClickListener(signInClickListener)
-        binding.signInInstructions.text = HtmlCompat.fromHtml(
-            if (requireContext().settings().allowDomesticChinaFxaServer && Config.channel.isMozillaOnline) {
-                getString(R.string.sign_in_instructions_cn)
-            } else {
-                getString(R.string.sign_in_instructions)
-            },
-            HtmlCompat.FROM_HTML_MODE_LEGACY,
-        )
+        binding.signInInstructions.text =
+            HtmlCompat.fromHtml(
+                getString(R.string.sign_in_instructions),
+                HtmlCompat.FROM_HTML_MODE_LEGACY,
+            )
 
-        interactor = DefaultSyncInteractor(
-            DefaultSyncController(activity = activity as HomeActivity),
-        )
+        interactor = DefaultSyncInteractor(DefaultSyncController(activity = activity as HomeActivity))
 
         binding.createAccount.increaseTapArea(CREATE_ACCOUNT_EXTRA_DIPS)
         binding.createAccount.apply {
-            text = HtmlCompat.fromHtml(
-                getString(R.string.sign_in_create_account_text),
-                HtmlCompat.FROM_HTML_MODE_LEGACY,
-            )
+            text =
+                HtmlCompat.fromHtml(
+                    getString(R.string.sign_in_create_account_text),
+                    HtmlCompat.FROM_HTML_MODE_LEGACY,
+                )
             setOnClickListener(createAccountClickListener)
         }
         return binding.root
@@ -161,29 +162,17 @@ class TurnOnSyncFragment : Fragment(), AccountObserver {
     }
 
     override fun onAuthenticated(account: OAuthAccount, authType: AuthType) {
-        // If we're in a `shouldLoginJustWithEmail = true` state, we won't have a view available,
-        // and can't display a snackbar.
-        if (view == null) {
-            return
-        }
-        val snackbarText = requireContext().getString(R.string.sync_syncing_in_progress)
-        val snackbarLength = FenixSnackbar.LENGTH_SHORT
-
-        // Since the snackbar can be presented in BrowserFragment or in SettingsFragment we must
-        // base our display method on the padSnackbar argument
-        FenixSnackbar.make(
-            view = requireView(),
-            duration = snackbarLength,
-            isDisplayedWithBrowserToolbar = args.padSnackbar,
-        )
-            .setText(snackbarText)
-            .show()
+        // Configure a snackbar to inform the user about the successful sign in.
+        // The screen will close immediately after and the snackbar will be shown by the parent fragment.
+        context?.components?.appStore?.dispatch(AppAction.UserAccountAuthenticated)
     }
 
     private fun navigateToPairWithEmail() {
         requireComponents.services.accountsAuthFeature.beginAuthentication(
-            requireContext(),
+            context = requireContext(),
             entrypoint = args.entrypoint,
+            service = FxaService.Sync.identifier,
+            scopes = setOf(SCOPE_PROFILE, SCOPE_SYNC),
         )
         SyncAuth.useEmail.record(NoExtras())
         // TODO The sign-in web content populates session history,

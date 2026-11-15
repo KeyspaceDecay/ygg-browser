@@ -5,9 +5,10 @@
 package org.mozilla.fenix.components.toolbar
 
 import android.view.View
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.mapNotNull
 import mozilla.components.browser.state.selector.findCustomTabOrSelectedTab
 import mozilla.components.browser.state.store.BrowserStore
@@ -18,27 +19,30 @@ import mozilla.components.support.ktx.kotlinx.coroutines.flow.ifAnyChanged
 class MenuPresenter(
     private val menuToolbar: BrowserToolbar,
     private val store: BrowserStore,
-    private val sessionId: String? = null,
+    private val customTabId: String? = null,
+    private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
 ) : View.OnAttachStateChangeListener {
 
     private var scope: CoroutineScope? = null
 
     fun start() {
         menuToolbar.addOnAttachStateChangeListener(this)
-        scope = store.flowScoped { flow ->
-            flow.mapNotNull { state -> state.findCustomTabOrSelectedTab(sessionId) }
-                .ifAnyChanged { tab ->
-                    arrayOf(
-                        tab.content.loading,
-                        tab.content.canGoBack,
-                        tab.content.canGoForward,
-                        tab.content.webAppManifest,
-                    )
-                }
-                .collect {
-                    invalidateActions()
-                }
-        }
+        scope =
+            store.flowScoped(dispatcher = mainDispatcher) { flow ->
+                flow
+                    .mapNotNull { state -> state.findCustomTabOrSelectedTab(customTabId) }
+                    .ifAnyChanged { tab ->
+                        arrayOf(
+                            tab.content.loading,
+                            tab.content.canGoBack,
+                            tab.content.canGoForward,
+                            tab.content.webAppManifest,
+                        )
+                    }
+                    .collect {
+                        invalidateActions()
+                    }
+            }
     }
 
     fun stop() {

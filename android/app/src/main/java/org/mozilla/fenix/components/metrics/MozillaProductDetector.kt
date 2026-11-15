@@ -7,7 +7,7 @@ package org.mozilla.fenix.components.metrics
 import android.content.Context
 import android.content.pm.PackageManager
 import mozilla.components.support.utils.BrowsersCache
-import mozilla.components.support.utils.ext.getPackageInfoCompat
+import mozilla.components.support.utils.ext.packageManagerCompatHelper
 
 object MozillaProductDetector {
     enum class MozillaProducts(val productName: String) {
@@ -31,8 +31,10 @@ object MozillaProductDetector {
     fun getInstalledMozillaProducts(context: Context): List<String> {
         val mozillaProducts = mutableListOf<String>()
 
-        for (product in MozillaProducts.values()) {
-            if (packageIsInstalled(context, product.productName)) { mozillaProducts.add(product.productName) }
+        for (product in MozillaProducts.entries) {
+            if (packageIsInstalled(context, product.productName)) {
+                mozillaProducts.add(product.productName)
+            }
         }
 
         getMozillaBrowserDefault(context)?.let {
@@ -46,7 +48,7 @@ object MozillaProductDetector {
 
     fun packageIsInstalled(context: Context, packageName: String): Boolean {
         try {
-            context.packageManager.getPackageInfoCompat(packageName, 0)
+            context.packageManagerCompatHelper.getPackageInfoCompat(packageName, 0)
         } catch (e: PackageManager.NameNotFoundException) {
             return false
         }
@@ -54,17 +56,19 @@ object MozillaProductDetector {
         return true
     }
 
-    /**
-     * Returns the default browser if and only if it is a Mozilla product.
-     */
+    /** Returns the default browser if and only if it is a Mozilla product. */
     fun getMozillaBrowserDefault(context: Context): String? {
         val browserPackageName = BrowsersCache.all(context).defaultBrowser?.packageName
-        return if (isMozillaProduct(browserPackageName)) { browserPackageName } else { null }
+        return if (isMozillaProduct(browserPackageName)) {
+            browserPackageName
+        } else {
+            null
+        }
     }
 
     // Note: we intentionally do not use a-c `firefoxBrandedBrowser` as this only gives us the first from that list
     private fun isMozillaProduct(packageName: String?): Boolean {
         packageName ?: return false
-        return MozillaProducts.values().any { product -> product.productName == packageName }
+        return MozillaProducts.entries.any { product -> product.productName == packageName }
     }
 }

@@ -9,7 +9,6 @@ import android.view.View
 import io.mockk.mockk
 import io.mockk.verify
 import mozilla.components.concept.storage.CreditCard
-import mozilla.components.concept.storage.CreditCardNumber
 import mozilla.components.support.test.robolectric.testContext
 import mozilla.components.support.utils.CreditCardNetworkType
 import org.junit.Assert.assertEquals
@@ -17,30 +16,31 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.databinding.CreditCardListItemBinding
-import org.mozilla.fenix.helpers.FenixRobolectricTestRunner
 import org.mozilla.fenix.settings.creditcards.interactor.CreditCardsManagementInteractor
 import org.mozilla.fenix.settings.creditcards.view.CreditCardItemViewHolder
+import org.robolectric.RobolectricTestRunner
 
-@RunWith(FenixRobolectricTestRunner::class)
+@RunWith(RobolectricTestRunner::class)
 class CreditCardItemViewHolderTest {
 
     private lateinit var view: View
     private lateinit var interactor: CreditCardsManagementInteractor
     private lateinit var binding: CreditCardListItemBinding
 
-    private val creditCard = CreditCard(
-        guid = "id",
-        billingName = "Banana Apple",
-        encryptedCardNumber = CreditCardNumber.Encrypted("4111111111111110"),
-        cardNumberLast4 = "1110",
-        expiryMonth = 1,
-        expiryYear = 2030,
-        cardType = CreditCardNetworkType.AMEX.cardName,
-        timeCreated = 1L,
-        timeLastUsed = 1L,
-        timeLastModified = 1L,
-        timesUsed = 1L,
-    )
+    private val creditCard =
+        CreditCard(
+            guid = "id",
+            billingName = "Banana Apple",
+            cardNumber = "4111111111111110",
+            cardNumberLast4 = "1110",
+            expiryMonth = 1,
+            expiryYear = 2030,
+            cardType = CreditCardNetworkType.AMEX.cardName,
+            timeCreated = 1L,
+            timeLastUsed = 1L,
+            timeLastModified = 1L,
+            timesUsed = 1L,
+        )
 
     @Before
     fun setup() {

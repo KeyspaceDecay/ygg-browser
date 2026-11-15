@@ -7,6 +7,7 @@ package org.mozilla.fenix.library
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.R as materialR
 import mozilla.components.support.ktx.android.content.getColorFromAttr
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
@@ -26,11 +27,9 @@ abstract class LibraryPageFragment<T> : Fragment() {
 
     protected fun openItemsInNewTab(private: Boolean = false, toUrl: (T) -> String?) {
         context?.components?.useCases?.tabsUseCases?.let { tabsUseCases ->
-            selectedItems.asSequence()
-                .mapNotNull(toUrl)
-                .forEach { url ->
-                    tabsUseCases.addTab.invoke(url, private = private)
-                }
+            selectedItems.asSequence().mapNotNull(toUrl).forEach { url ->
+                tabsUseCases.addTab.invoke(url, private = private)
+            }
         }
 
         (activity as HomeActivity).browsingModeManager.mode = BrowsingMode.fromBoolean(private)
@@ -39,10 +38,13 @@ abstract class LibraryPageFragment<T> : Fragment() {
     override fun onDetach() {
         super.onDetach()
         context?.let {
-            activity?.findViewById<Toolbar>(R.id.navigationToolbar)?.setToolbarColors(
-                it.getColorFromAttr(R.attr.textPrimary),
-                it.getColorFromAttr(R.attr.layer1),
-            )
+            activity?.title = getString(R.string.app_name)
+            activity
+                ?.findViewById<Toolbar>(R.id.navigationToolbar)
+                ?.setToolbarColors(
+                    it.getColorFromAttr(materialR.attr.colorOnSurface),
+                    it.getColorFromAttr(materialR.attr.colorSurface),
+                )
         }
     }
 }

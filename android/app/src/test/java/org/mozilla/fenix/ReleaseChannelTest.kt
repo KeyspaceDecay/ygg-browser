@@ -13,11 +13,9 @@ class ReleaseChannelTest {
 
     @Test
     fun `isReleased and isDebug channels are mutually exclusive`() {
-        val debugChannels = setOf(
-            Debug,
-        )
+        val debugChannels = setOf(Debug)
 
-        val nonDebugChannels = ReleaseChannel.values().toSet() - debugChannels
+        val nonDebugChannels = ReleaseChannel.entries.toSet() - debugChannels
 
         nonDebugChannels.forEach {
             val className = it.javaClass.simpleName

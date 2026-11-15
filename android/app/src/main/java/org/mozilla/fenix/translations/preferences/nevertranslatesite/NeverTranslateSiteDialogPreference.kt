@@ -4,17 +4,13 @@
 
 package org.mozilla.fenix.translations.preferences.nevertranslatesite
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import mozilla.components.compose.base.button.TextButton
 import org.mozilla.fenix.R
-import org.mozilla.fenix.compose.annotation.LightDarkPreview
-import org.mozilla.fenix.compose.button.TextButton
 import org.mozilla.fenix.theme.FirefoxTheme
 
 /**
@@ -32,15 +28,10 @@ fun NeverTranslateSiteDialogPreference(
 ) {
     AlertDialog(
         onDismissRequest = {},
-        modifier = Modifier.background(
-            color = FirefoxTheme.colors.layer2,
-            shape = RoundedCornerShape(8.dp),
-        ),
-        title = {
+        text = {
             Text(
                 text = stringResource(R.string.never_translate_site_dialog_title_preference, websiteUrl),
-                color = FirefoxTheme.colors.textPrimary,
-                style = FirefoxTheme.typography.headline7,
+                style = FirefoxTheme.typography.body2,
             )
         },
         confirmButton = {
@@ -55,12 +46,11 @@ fun NeverTranslateSiteDialogPreference(
                 onClick = { onCancel() },
             )
         },
-        backgroundColor = FirefoxTheme.colors.layer2,
     )
 }
 
 @Composable
-@LightDarkPreview
+@PreviewLightDark
 private fun NeverTranslateSiteDialogPreferencePreview() {
     FirefoxTheme {
         NeverTranslateSiteDialogPreference(

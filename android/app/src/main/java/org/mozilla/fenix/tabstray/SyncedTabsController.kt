@@ -6,9 +6,7 @@ package org.mozilla.fenix.tabstray
 
 import mozilla.components.browser.storage.sync.Tab
 
-/**
- * Controller for handling any actions on synced tabs in the tabs tray.
- */
+/** Controller for handling any actions on synced tabs in the tabs tray. */
 interface SyncedTabsController {
     /**
      * Handles a synced tab item click.
@@ -16,4 +14,7 @@ interface SyncedTabsController {
      * @param tab The synced [Tab] that was clicked.
      */
     fun handleSyncedTabClicked(tab: Tab)
+
+    /** Handles a click on the "close" button for a synced tab. */
+    fun handleSyncedTabClosed(deviceId: String, tab: Tab)
 }

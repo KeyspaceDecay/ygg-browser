@@ -5,23 +5,29 @@
 package org.mozilla.fenix.helpers
 
 import android.content.Context
+import android.os.Build
+import android.os.Environment
 import android.util.Log
 import androidx.test.platform.app.InstrumentationRegistry
+import java.io.File
+import kotlin.io.path.createTempDirectory
 import kotlinx.coroutines.runBlocking
+import mockwebserver3.MockWebServer
 import mozilla.appservices.places.BookmarkRoot
 import mozilla.components.browser.icons.IconRequest
 import mozilla.components.browser.icons.generator.DefaultIconGenerator
 import mozilla.components.browser.state.search.SearchEngine
+import mozilla.components.browser.state.state.createTab
 import mozilla.components.browser.storage.sync.PlacesBookmarksStorage
 import mozilla.components.browser.storage.sync.PlacesHistoryStorage
 import mozilla.components.concept.storage.PageVisit
 import mozilla.components.concept.storage.VisitType
 import mozilla.components.feature.search.ext.createSearchEngine
-import okhttp3.mockwebserver.MockWebServer
+import mozilla.components.feature.tab.collections.TabCollectionStorage
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.helpers.Constants.TAG
 import org.mozilla.fenix.helpers.TestHelper.appContext
-import org.mozilla.fenix.search.SearchEngineSource.None.searchEngine
+import org.mozilla.fenix.helpers.TestHelper.restartApp
 
 object MockBrowserDataHelper {
     val context: Context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -32,19 +38,57 @@ object MockBrowserDataHelper {
      * @param url The URL of the bookmark item to add. URLs should use the "https://example.com" format.
      * @param title The title of the bookmark item to add.
      * @param position Example for the position param: 1u, 2u, etc.
+     * @param parentGuid The parent guid of the bookmark item to add. BookmarkRoot.Mobile.id is the root id for mobile
+     *   bookmarks.
      */
-    fun createBookmarkItem(url: String, title: String, position: UInt?) {
-        Log.i(TAG, "createBookmarkItem: Trying to add bookmark item at position: $position, with url: $url, and with title: $title")
+    fun createBookmarkItem(
+        url: String,
+        title: String,
+        position: UInt?,
+        parentGuid: String = BookmarkRoot.Mobile.id,
+    ) {
+        Log.i(
+            TAG,
+            "createBookmarkItem: Trying to add bookmark item at position: $position, with url: $url, and with title: $title",
+        )
         runBlocking {
             PlacesBookmarksStorage(context)
                 .addItem(
-                    BookmarkRoot.Mobile.id,
+                    parentGuid,
                     url,
                     title,
                     position,
                 )
         }
-        Log.i(TAG, "createBookmarkItem: Added bookmark item at position: $position, with url: $url, and with title: $title")
+        Log.i(
+            TAG,
+            "createBookmarkItem: Added bookmark item at position: $position, with url: $url, and with title: $title",
+        )
+    }
+
+    /**
+     * Adds a new bookmark folder, visible in the Bookmarks folder.
+     *
+     * @param parentGuid The parent guid of the bookmark folder to add. BookmarkRoot.Mobile.id is the root id for mobile
+     *   bookmarks.
+     * @param title The title of the bookmark folder to add.
+     * @param position Example for the position param: null, 1u, 2u, etc.
+     * @return The guid of the newly created bookmark folder.
+     */
+    fun generateBookmarkFolder(
+        parentGuid: String = BookmarkRoot.Mobile.id,
+        title: String,
+        position: UInt?,
+    ): String {
+        return runBlocking {
+            PlacesBookmarksStorage(context)
+                .addFolder(
+                    parentGuid = parentGuid,
+                    title = title,
+                    position = position,
+                )
+                .getOrDefault("")
+        }
     }
 
     /**
@@ -77,10 +121,7 @@ object MockBrowserDataHelper {
         Log.i(TAG, "createTabItem: Created a new tab with url: $url")
     }
 
-    /**
-     * Triggers a search for the provided search term in a new tab.
-     *
-     */
+    /** Triggers a search for the provided search term in a new tab. */
     fun createSearchHistory(searchTerm: String) {
         Log.i(TAG, "createSearchHistory: Trying to perform a new search with search term: $searchTerm")
         appContext.components.useCases.searchUseCases.newTabSearch.invoke(searchTerm)
@@ -94,9 +135,11 @@ object MockBrowserDataHelper {
      * @param searchEngineName The name of the new search engine.
      */
     private fun createCustomSearchEngine(mockWebServer: MockWebServer, searchEngineName: String): SearchEngine {
-        val searchString =
-            "http://localhost:${mockWebServer.port}/pages/searchResults.html?search={searchTerms}"
-        Log.i(TAG, "createCustomSearchEngine: Trying to create a custom search engine named: $searchEngineName and search string: $searchString")
+        val searchString = "http://localhost:${mockWebServer.port}/pages/searchResults.html?search={searchTerms}"
+        Log.i(
+            TAG,
+            "createCustomSearchEngine: Trying to create a custom search engine named: $searchEngineName and search string: $searchString",
+        )
         return createSearchEngine(
             name = searchEngineName,
             url = searchString,
@@ -107,7 +150,8 @@ object MockBrowserDataHelper {
     /**
      * Adds a new custom search engine to the apps Search Engines list.
      *
-     * @param searchEngine Use createCustomSearchEngine method to create one.
+     * @param mockWebServer The server the search engine will query.
+     * @param searchEngineName Use createCustomSearchEngine method to create one.
      */
     fun addCustomSearchEngine(mockWebServer: MockWebServer, searchEngineName: String) {
         val searchEngine = createCustomSearchEngine(mockWebServer, searchEngineName)
@@ -119,7 +163,8 @@ object MockBrowserDataHelper {
     /**
      * Adds and selects as default a new custom search engine to the apps Search Engines list.
      *
-     * @param searchEngine Use createCustomSearchEngine method to create one.
+     * @param mockWebServer The server the search engine will query.
+     * @param searchEngineName Use createCustomSearchEngine method to create one.
      */
     fun setCustomSearchEngine(mockWebServer: MockWebServer, searchEngineName: String) {
         val searchEngine = createCustomSearchEngine(mockWebServer, searchEngineName)
@@ -129,5 +174,80 @@ object MockBrowserDataHelper {
             selectSearchEngine(searchEngine)
         }
         Log.i(TAG, "setCustomSearchEngine: A custom search engine named: $searchEngineName was set")
+    }
+
+    /**
+     * Adds a new pinned site to the app home screen.
+     *
+     * @param webPageMetadata A pair of website title and URL.
+     * @param activityTestRule The rule used to restart the app so that the pinned site is displayed.
+     */
+    fun addPinnedSite(vararg webPageMetadata: Pair<String, String>, activityTestRule: HomeActivityIntentTestRule) {
+        runBlocking {
+            for (metadata in webPageMetadata) {
+                Log.i(TAG, "addTopSite: Trying to add a pinned site to the home screen.")
+                appContext.components.useCases.topSitesUseCase.addPinnedSites(
+                    metadata.first,
+                    metadata.second,
+                )
+                Log.i(TAG, "addTopSite: Added a pinned site to the home screen.")
+            }
+            // Sometimes a restart is needed to ensure the pinned site is displayed on the home screen.
+            restartApp(activityTestRule)
+        }
+    }
+
+    /**
+     * Creates a new collection with the provided tabs.
+     *
+     * @param tabInfo Pairs of URLs and titles of the tabs to add to the collection.
+     * @param title The title of the collection to create.
+     */
+    fun createCollection(vararg tabInfo: Pair<String, String>, title: String) {
+        runBlocking {
+            val tabs = tabInfo.map { (tabUrl, tabTitle) ->
+                createTab(url = tabUrl, title = tabTitle)
+            }
+
+            TabCollectionStorage(context).createCollection(title, tabs)
+        }
+    }
+
+    /**
+     * Creates a Netscape-format bookmarks HTML file in the device Downloads directory, suitable for exercising the
+     * "Import bookmarks from file" flow. The file is written inside a fresh temporary directory; callers are
+     * responsible for deleting that directory once the test completes (e.g. `file.parentFile?.deleteRecursively()`).
+     *
+     * @param bookmarks Pairs of bookmark title and URL to include in the file.
+     * @return The created bookmarks HTML [File].
+     */
+    fun createBookmarksHtmlFile(
+        vararg bookmarks: Pair<String, String> = arrayOf("Mozilla" to "https://www.mozilla.org")
+    ): File {
+        val downloadsDirectory =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                requireNotNull(appContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS))
+            } else {
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            }
+
+        downloadsDirectory.mkdirs()
+        val tempFileDirectory =
+            createTempDirectory(directory = downloadsDirectory.toPath(), prefix = "bookmarks_import_").toFile()
+
+        val entries = bookmarks.joinToString("\n") { (title, url) -> """  <DT><A HREF="$url">$title</A>""" }
+
+        return File(tempFileDirectory, "bookmarks.html").apply {
+            writeText(
+                """
+                <!DOCTYPE NETSCAPE-Bookmark-file-1>
+                <HTML>
+                <DL><p>
+                $entries
+                </DL>
+                """
+                    .trimIndent()
+            )
+        }
     }
 }

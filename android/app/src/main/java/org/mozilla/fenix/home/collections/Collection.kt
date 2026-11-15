@@ -4,17 +4,16 @@
 
 package org.mozilla.fenix.home.collections
 
-import android.content.Context
-import android.content.res.Configuration
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,36 +24,40 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
-import mozilla.components.browser.state.state.recover.RecoverableTab
-import mozilla.components.concept.engine.Engine
-import mozilla.components.feature.tab.collections.Tab
+import mozilla.components.compose.base.button.IconButton
 import mozilla.components.feature.tab.collections.TabCollection
+import mozilla.components.ui.icons.R as iconsR
 import org.mozilla.fenix.R
-import org.mozilla.fenix.R.drawable
 import org.mozilla.fenix.R.string
 import org.mozilla.fenix.compose.ContextualMenu
 import org.mozilla.fenix.compose.MenuItem
 import org.mozilla.fenix.compose.list.ExpandableListHeader
 import org.mozilla.fenix.ext.getIconColor
+import org.mozilla.fenix.home.fake.FakeHomepagePreview
 import org.mozilla.fenix.theme.FirefoxTheme
-import org.mozilla.fenix.theme.Theme
+
+/** Rectangular shape with all corners rounded used to display a collapsed collection. */
+private val collapsedCollectionShape: Shape
+    @Composable get() = MaterialTheme.shapes.small
 
 /**
- * Rectangular shape with all corners rounded used to display a collapsed collection.
+ * Rectangular shape with only the top corners rounded used to display an expanded collection with other views placed
+ * immediately below this which can be shown immediately next to it, with no visible separation.
  */
-private val collapsedCollectionShape = RoundedCornerShape(8.dp)
-
-/**
- * Rectangular shape with only the top corners rounded used to display an expanded collection with other views
- * placed immediately below this which can be shown immediately next to it, with no visible separation.
- */
-private val expandedCollectionShape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)
+private val expandedCollectionShape: Shape
+    @Composable
+    get() =
+        MaterialTheme.shapes.small.copy(
+            bottomStart = CornerSize(0.dp),
+            bottomEnd = CornerSize(0.dp),
+        )
 
 /**
  * Displays an individual [TabCollection].
@@ -66,7 +69,7 @@ private val expandedCollectionShape = RoundedCornerShape(topStart = 8.dp, topEnd
  * @param onCollectionShareTabsClicked Invoked when the user clicks to share the collection.
  */
 @Composable
-@Suppress("LongMethod")
+@Suppress("LongMethod", "Deprecation") // https://bugzilla.mozilla.org/show_bug.cgi?id=1927713
 fun Collection(
     collection: TabCollection,
     expanded: Boolean,
@@ -75,40 +78,44 @@ fun Collection(
     onCollectionShareTabsClicked: (TabCollection) -> Unit,
 ) {
     var isMenuExpanded by remember(collection) { mutableStateOf(false) }
-    val isExpanded by remember(collection) { mutableStateOf(expanded) }
+    val isExpanded by remember(collection, expanded) { mutableStateOf(expanded) }
 
     Card(
-        modifier = Modifier
-            .semantics(mergeDescendants = true) {}
-            .clickable(
-                onClickLabel = if (isExpanded) {
-                    stringResource(R.string.a11y_action_label_collapse)
-                } else {
-                    stringResource(R.string.a11y_action_label_expand)
-                },
-                onClick = { onToggleCollectionExpanded(collection, !isExpanded) },
-            )
-            .height(48.dp),
+        modifier =
+            Modifier.semantics(mergeDescendants = true) {}
+                .clickable(
+                    onClickLabel =
+                        if (isExpanded) {
+                            stringResource(R.string.a11y_action_label_collapse)
+                        } else {
+                            stringResource(R.string.a11y_action_label_expand)
+                        },
+                    onClick = { onToggleCollectionExpanded(collection, !isExpanded) },
+                )
+                .height(48.dp),
         shape = if (isExpanded) expandedCollectionShape else collapsedCollectionShape,
-        backgroundColor = FirefoxTheme.colors.layer2,
-        elevation = 5.dp,
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceBright),
+        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxHeight(),
+            modifier = Modifier.fillMaxHeight(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
-                painter = painterResource(drawable.ic_tab_collection),
+                painter = painterResource(iconsR.drawable.mozac_ic_collection_24),
                 contentDescription = null,
-                modifier = Modifier.padding(
-                    start = 16.dp,
-                    end = 8.dp, // (24.dp - 16.dp) hardcoded in ExpandableListHeader
-                ),
-                tint = Paint().apply {
-                    color = Color(collection.getIconColor(LocalContext.current))
-                    blendMode = BlendMode.SrcIn
-                }.color,
+                modifier =
+                    Modifier.padding(
+                        start = 16.dp,
+                        end = 8.dp, // (24.dp - 16.dp) hardcoded in ExpandableListHeader
+                    ),
+                tint =
+                    Paint()
+                        .apply {
+                            color = Color(collection.getIconColor(LocalContext.current))
+                            blendMode = BlendMode.SrcIn
+                        }
+                        .color,
             )
 
             ExpandableListHeader(
@@ -120,11 +127,11 @@ fun Collection(
                     Row {
                         IconButton(
                             onClick = { onCollectionShareTabsClicked(collection) },
+                            contentDescription = stringResource(string.share_button_content_description),
                         ) {
                             Icon(
-                                painter = painterResource(drawable.ic_share),
-                                contentDescription = stringResource(string.share_button_content_description),
-                                tint = FirefoxTheme.colors.iconPrimary,
+                                painter = painterResource(iconsR.drawable.mozac_ic_share_android_24),
+                                contentDescription = null,
                             )
                         }
 
@@ -132,13 +139,11 @@ fun Collection(
                             onClick = {
                                 isMenuExpanded = !isMenuExpanded
                             },
+                            contentDescription = stringResource(string.collection_menu_button_content_description),
                         ) {
                             Icon(
-                                painter = painterResource(drawable.ic_menu),
-                                contentDescription = stringResource(
-                                    string.collection_menu_button_content_description,
-                                ),
-                                tint = FirefoxTheme.colors.iconPrimary,
+                                painter = painterResource(iconsR.drawable.mozac_ic_ellipsis_vertical_24),
+                                contentDescription = null,
                             )
 
                             ContextualMenu(
@@ -155,76 +160,37 @@ fun Collection(
 }
 
 @Composable
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
-private fun CollectionDarkPreview() {
-    FirefoxTheme(Theme.Dark) {
+@PreviewLightDark
+private fun CollectionExpandedPreview() {
+    FirefoxTheme {
+        var expanded by remember { mutableStateOf(true) }
+
         Collection(
-            collection = collectionPreview,
-            expanded = false,
+            collection = FakeHomepagePreview.collection(),
+            expanded = expanded,
             menuItems = emptyList(),
-            onToggleCollectionExpanded = { _, _ -> },
+            onToggleCollectionExpanded = { _, expand ->
+                expanded = expand
+            },
             onCollectionShareTabsClicked = {},
         )
     }
 }
 
 @Composable
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
-private fun CollectionDarkExpandedPreview() {
-    FirefoxTheme(Theme.Dark) {
+@PreviewLightDark
+private fun CollectionPreview() {
+    FirefoxTheme {
+        var expanded by remember { mutableStateOf(false) }
+
         Collection(
-            collection = collectionPreview,
-            expanded = true,
+            collection = FakeHomepagePreview.collection(),
+            expanded = expanded,
             menuItems = emptyList(),
-            onToggleCollectionExpanded = { _, _ -> },
+            onToggleCollectionExpanded = { _, expand ->
+                expanded = expand
+            },
             onCollectionShareTabsClicked = {},
         )
     }
-}
-
-@Composable
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_NO)
-private fun CollectionLightPreview() {
-    FirefoxTheme(Theme.Light) {
-        Collection(
-            collection = collectionPreview,
-            expanded = false,
-            menuItems = emptyList(),
-            onToggleCollectionExpanded = { _, _ -> },
-            onCollectionShareTabsClicked = {},
-        )
-    }
-}
-
-@Composable
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_NO)
-private fun CollectionLightExpandedPreview() {
-    FirefoxTheme(Theme.Light) {
-        Collection(
-            collection = collectionPreview,
-            expanded = true,
-            menuItems = emptyList(),
-            onToggleCollectionExpanded = { _, _ -> },
-            onCollectionShareTabsClicked = {},
-        )
-    }
-}
-
-private val collectionPreview = object : TabCollection {
-    override val id: Long = 1L
-    override val tabs: List<Tab> = emptyList()
-    override val title: String = "Collection 1"
-
-    override fun restore(
-        context: Context,
-        engine: Engine,
-        restoreSessionId: Boolean,
-    ): List<RecoverableTab> = emptyList()
-
-    override fun restoreSubset(
-        context: Context,
-        engine: Engine,
-        tabs: List<Tab>,
-        restoreSessionId: Boolean,
-    ): List<RecoverableTab> = emptyList()
 }

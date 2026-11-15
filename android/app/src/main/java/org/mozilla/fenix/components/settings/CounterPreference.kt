@@ -13,7 +13,12 @@ class CounterPreference(
     private val maxCount: Int,
 ) {
 
-    val value get() = holder.preferences.getInt(key, 0)
+    var value
+        get() = holder.preferences.getInt(key, 0)
+        set(value) =
+            holder.preferences.edit {
+                putInt(key, value)
+            }
 
     fun underMaxCount() = value < maxCount
 
@@ -24,8 +29,5 @@ class CounterPreference(
     }
 }
 
-/**
- * Property delegate for getting and an int shared preference and incrementing it.
- */
-fun PreferencesHolder.counterPreference(key: String, maxCount: Int = -1) =
-    CounterPreference(this, key, maxCount)
+/** Property delegate for getting and an int shared preference and incrementing it. */
+fun PreferencesHolder.counterPreference(key: String, maxCount: Int = -1) = CounterPreference(this, key, maxCount)

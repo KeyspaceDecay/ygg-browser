@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html>
+<!doctype html>
 <!-- This Source Code Form is subject to the terms of the Mozilla Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
@@ -8,7 +8,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width; user-scalable=false;" />
-    <meta http-equiv="Content-Security-Policy" content="default-src resource:; object-src 'none'" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src resource:; object-src 'none'; connect-src https://archive.org"
+    />
     <link rel="stylesheet" type="text/css" href="shared_error_style.css" />
     <link
       rel="stylesheet"
@@ -21,7 +24,9 @@
     <!-- PAGE CONTAINER (for styling purposes only) -->
     <div id="errorPageContainer">
       <!-- Error Image -->
-      <iframe id="errorImage" src="" frameborder="0"></iframe>
+      <div id="imageContainer">
+        <img id="errorImage" src="" />
+      </div>
 
       <!-- Error Title -->
       <div id="errorTitle">
@@ -33,14 +38,28 @@
         <div id="errorShortDesc"></div>
       </div>
 
+      <div id="errorLinkContent"><a id="errorCode"></a></div>
+
       <!-- Retry Button -->
       <button id="errorTryAgain"></button>
 
+      <!-- Offer an archived copy of the page when the live site is unreachable. Hidden by
+           default via the #viewArchivedButton stylesheet rule (an inline style attribute would
+           be blocked by the page CSP, and the [hidden] attribute is overridden by `button {
+           display: block }`); shown from JS via element.style, which CSP does not restrict. -->
+      <button id="viewArchivedButton" class="buttonTertiary"></button>
+      <p id="archiveDescription" hidden></p>
+      <div id="archiveWarningContent" class="warningContainer" hidden>
+        <span id="archiveNotFoundText"></span><br />
+        <a id="archiveSearchWebLink" href="#"></a>
+      </div>
+      <div id="archiveErrorContent" class="warningContainer" hidden>
+        <span id="archiveUnreachableText"></span><br />
+        <a id="archiveRetryLink" href="#"></a>
+      </div>
+
       <!-- Advanced Button -->
-      <button
-        id="advancedButton"
-        class="buttonSecondary hidden"
-      ></button>
+      <button id="advancedButton" class="buttonSecondary hidden"></button>
 
       <!-- "Go back" Button (For HTTPS-Only error page only) -->
       <button id="backFromHttp"></button>
@@ -56,9 +75,7 @@
             id="advancedPanelBackButtonContainer"
             class="advancedPanelButtonContainer"
           >
-            <button
-              id="advancedPanelBackButton"
-            ></button>
+            <button id="advancedPanelBackButton"></button>
           </div>
           <div
             id="advancedPanelAcceptButtonContainer"
@@ -74,35 +91,5 @@
     </div>
   </body>
 
-  <script type="text/javascript">
-    if (window.history.length == 1) {
-        document.getElementById('advancedPanelBackButton').style.display = 'none';
-    }
-
-    function toggleAdvancedAndScroll() {
-      toggleAdvanced();
-
-      const horizontalLine = document.getElementById("horizontalLine");
-      const advancedPanelAcceptButton = document.getElementById(
-        "advancedPanelAcceptButton"
-      );
-      const badCertAdvancedPanel = document.getElementById(
-        "badCertAdvancedPanel"
-      );
-
-      // We know that the button is being displayed
-      if (badCertAdvancedPanel.style.display === "block") {
-        horizontalLine.hidden = false;
-        advancedPanelAcceptButton.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-          inline: "nearest",
-        });
-      } else {
-        horizontalLine.hidden = true;
-      }
-    }
-  </script>
-
-    <script src="./lowMediumErrorPages.js"></script>
+  <script src="./lowMediumErrorPages.js"></script>
 </html>

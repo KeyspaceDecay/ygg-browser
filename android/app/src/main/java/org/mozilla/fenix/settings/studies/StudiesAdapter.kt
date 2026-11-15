@@ -5,21 +5,17 @@
 package org.mozilla.fenix.settings.studies
 
 import android.annotation.SuppressLint
-import android.content.Context
-import android.content.DialogInterface
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.annotation.VisibleForTesting
-import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import com.google.android.material.button.MaterialButton
 import mozilla.components.service.nimbus.messaging.MESSAGING_FEATURE_ID
-import mozilla.components.ui.widgets.withCenterAlignedButtons
 import org.mozilla.experiments.nimbus.internal.EnrolledExperiment
 import org.mozilla.fenix.R
 import org.mozilla.fenix.settings.studies.CustomViewHolder.SectionViewHolder
@@ -29,16 +25,15 @@ private const val VIEW_HOLDER_TYPE_SECTION = 0
 private const val VIEW_HOLDER_TYPE_STUDY = 1
 
 /**
- * An adapter for displaying studies items. This will display information related to the state of
- * a study such as active. In addition, it will perform actions such as removing a study.
+ * An adapter for displaying studies items. This will display information related to the state of a study such as
+ * active. In addition, it will perform actions such as removing a study.
  *
- * @param studiesDelegate Delegate that will provides method for handling
- * the studies actions items.
+ * @param studiesDelegate Delegate that will provides method for handling the studies actions items.
  * @param studies The list of studies.
- *  * @property studiesDelegate Delegate that will provides method for handling
- * the studies actions items.
- * @param shouldSubmitOnInit The sole purpose of this property is to prevent the submitList function
- * to run on init, it should only be used from tests.
+ *     * @property studiesDelegate Delegate that will provides method for handling the studies actions items.
+ *
+ * @param shouldSubmitOnInit The sole purpose of this property is to prevent the submitList function to run on init, it
+ *   should only be used from tests.
  */
 @Suppress("LargeClass")
 class StudiesAdapter(
@@ -47,9 +42,8 @@ class StudiesAdapter(
     private val shouldSubmitOnInit: Boolean = true,
 ) : ListAdapter<Any, CustomViewHolder>(DifferCallback) {
     /**
-     * Represents all the studies that will be distributed in multiple headers like
-     * active, and completed, this helps to have the data source of the items,
-     * displayed in the UI.
+     * Represents all the studies that will be distributed in multiple headers like active, and completed, this helps to
+     * have the data source of the items, displayed in the UI.
      */
     @VisibleForTesting
     internal var studiesMap: MutableMap<String, EnrolledExperiment> =
@@ -121,30 +115,8 @@ class StudiesAdapter(
         holder.summaryView.text = study.userFacingDescription
 
         holder.deleteButton.setOnClickListener {
-            showDeleteDialog(holder.titleView.context, study)
+            studiesDelegate.onRemoveButtonClicked(study)
         }
-    }
-
-    @VisibleForTesting
-    internal fun showDeleteDialog(context: Context, study: EnrolledExperiment): AlertDialog {
-        val builder = AlertDialog.Builder(context)
-            .setPositiveButton(
-                R.string.studies_restart_dialog_ok,
-            ) { dialog, _ ->
-                studiesDelegate.onRemoveButtonClicked(study)
-                dialog.dismiss()
-            }
-            .setNegativeButton(
-                R.string.studies_restart_dialog_cancel,
-            ) { dialog: DialogInterface, _ ->
-                dialog.dismiss()
-            }
-            .setTitle(R.string.preference_experiments_2)
-            .setMessage(R.string.studies_restart_app)
-            .setCancelable(false)
-        val alertDialog: AlertDialog = builder.create().withCenterAlignedButtons()
-        alertDialog.show()
-        return alertDialog
     }
 
     internal fun createListWithSections(studies: List<EnrolledExperiment>): List<Any> {
@@ -161,16 +133,16 @@ class StudiesAdapter(
         return itemsWithSections
     }
 
-    /**
-     * Filter out studies which only affect the messaging feature.
-     */
-    private fun filterStudies(studies: List<EnrolledExperiment>) =
-        studies.filterNot {
-            it.featureIds.size == 1 && it.featureIds.contains(MESSAGING_FEATURE_ID)
-        }
+    /** Filter out studies which only affect the messaging feature. */
+    private fun filterStudies(studies: List<EnrolledExperiment>) = studies.filterNot {
+        it.featureIds.size == 1 && it.featureIds.contains(MESSAGING_FEATURE_ID)
+    }
 
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
-    internal data class Section(@StringRes val title: Int, val visibleDivider: Boolean = true)
+    internal data class Section(
+        @param:StringRes val title: Int,
+        val visibleDivider: Boolean = true,
+    )
 
     /**
      * Removes the portion of the list that contains the provided [study].

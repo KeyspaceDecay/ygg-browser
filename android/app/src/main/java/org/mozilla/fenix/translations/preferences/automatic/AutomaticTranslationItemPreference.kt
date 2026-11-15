@@ -4,21 +4,20 @@
 
 package org.mozilla.fenix.translations.preferences.automatic
 
-import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
+import mozilla.components.concept.engine.translate.Language
+import mozilla.components.concept.engine.translate.LanguageSetting
 import org.mozilla.fenix.R
 
 /**
  * AutomaticTranslationItem that will appear on Automatic Translation screen.
  *
- * @property displayName The text that will appear in the list.
+ * @property language The text that will appear in the list.
  * @property automaticTranslationOptionPreference The option that the user selected.
  */
-@Parcelize
 data class AutomaticTranslationItemPreference(
-    val displayName: String,
+    val language: Language,
     val automaticTranslationOptionPreference: AutomaticTranslationOptionPreference,
-) : Parcelable
+)
 
 /**
  * AutomaticTranslationOption for a language.
@@ -26,42 +25,58 @@ data class AutomaticTranslationItemPreference(
  * @property titleId The string id title of the option.
  * @property summaryId The string id summary of the option.
  */
-@Parcelize
 sealed class AutomaticTranslationOptionPreference(
     open val titleId: Int,
     open val summaryId: List<Int>,
-) : Parcelable {
+) {
 
-    /**
-     * The app will offer to translate sites in the selected language.
-     */
+    /** The app will offer to translate sites in the selected language. */
     data class OfferToTranslate(
         override val titleId: Int = R.string.automatic_translation_option_offer_to_translate_title_preference,
-        override val summaryId: List<Int> = listOf(
-            R.string.automatic_translation_option_offer_to_translate_summary_preference,
-            R.string.firefox,
-        ),
+        override val summaryId: List<Int> =
+            listOf(
+                R.string.automatic_translation_option_offer_to_translate_summary_preference,
+                R.string.firefox,
+            ),
     ) : AutomaticTranslationOptionPreference(titleId = titleId, summaryId = summaryId)
 
-    /**
-     * The app will translate in the selected language automatically when the page loads.
-     */
+    /** The app will translate in the selected language automatically when the page loads. */
     data class AlwaysTranslate(
         override val titleId: Int = R.string.automatic_translation_option_always_translate_title_preference,
-        override val summaryId: List<Int> = listOf(
-            R.string.automatic_translation_option_always_translate_summary_preference,
-            R.string.firefox,
-        ),
+        override val summaryId: List<Int> =
+            listOf(
+                R.string.automatic_translation_option_always_translate_summary_preference,
+                R.string.firefox,
+            ),
     ) : AutomaticTranslationOptionPreference(titleId = titleId, summaryId = summaryId)
 
-    /**
-     * The app will never offer to translate sites in the selected language.
-     */
+    /** The app will never offer to translate sites in the selected language. */
     data class NeverTranslate(
         override val titleId: Int = R.string.automatic_translation_option_never_translate_title_preference,
-        override val summaryId: List<Int> = listOf(
-            R.string.automatic_translation_option_never_translate_summary_preference,
-            R.string.firefox,
-        ),
+        override val summaryId: List<Int> =
+            listOf(
+                R.string.automatic_translation_option_never_translate_summary_preference,
+                R.string.firefox,
+            ),
     ) : AutomaticTranslationOptionPreference(titleId = titleId, summaryId = summaryId)
+}
+
+internal fun getAutomaticTranslationOptionPreference(
+    languageSetting: LanguageSetting
+): AutomaticTranslationOptionPreference {
+    return when (languageSetting) {
+        LanguageSetting.ALWAYS -> AutomaticTranslationOptionPreference.AlwaysTranslate()
+        LanguageSetting.OFFER -> AutomaticTranslationOptionPreference.OfferToTranslate()
+        LanguageSetting.NEVER -> AutomaticTranslationOptionPreference.NeverTranslate()
+    }
+}
+
+internal fun getLanguageSetting(
+    automaticTranslationItemPreference: AutomaticTranslationOptionPreference
+): LanguageSetting {
+    return when (automaticTranslationItemPreference) {
+        is AutomaticTranslationOptionPreference.AlwaysTranslate -> LanguageSetting.ALWAYS
+        is AutomaticTranslationOptionPreference.NeverTranslate -> LanguageSetting.NEVER
+        is AutomaticTranslationOptionPreference.OfferToTranslate -> LanguageSetting.OFFER
+    }
 }

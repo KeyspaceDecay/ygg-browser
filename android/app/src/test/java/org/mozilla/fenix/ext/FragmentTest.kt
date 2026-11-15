@@ -4,65 +4,117 @@
 
 package org.mozilla.fenix.ext
 
+import android.content.Context
+import android.view.WindowManager
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDirections
 import androidx.navigation.NavOptions
-import androidx.navigation.Navigator.Extras
-import androidx.navigation.fragment.findNavController
 import io.mockk.Runs
 import io.mockk.confirmVerified
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
-import io.mockk.mockkStatic
 import io.mockk.spyk
 import io.mockk.verify
 import mozilla.components.support.test.robolectric.testContext
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mozilla.fenix.helpers.FenixRobolectricTestRunner
+import org.mozilla.fenix.navigation.NavControllerProvider
+import org.mozilla.fenix.utils.Settings
+import org.robolectric.Robolectric
+import org.robolectric.RobolectricTestRunner
 
-@RunWith(FenixRobolectricTestRunner::class)
+@RunWith(RobolectricTestRunner::class)
 class FragmentTest {
 
     private val navDirections: NavDirections = mockk(relaxed = true)
     private val mockDestination = spyk(NavDestination("hi"))
-    private val mockExtras: Extras = mockk(relaxed = true)
     private val mockId = 4
-    private val navController = spyk(NavController(testContext))
-    private val mockFragment: Fragment = mockk(relaxed = true)
+    private val navController: NavController = mockk(relaxed = true)
     private val mockOptions: NavOptions = mockk(relaxed = true)
+    private val navControllerProvider: NavControllerProvider = mockk(relaxed = true)
+    private val settings: Settings = spyk(Settings(testContext))
+    private lateinit var mockContext: Context
+    private lateinit var fragment: Fragment
 
     @Before
     fun setup() {
-        mockkStatic("androidx.navigation.fragment.FragmentKt")
-        every { (mockFragment.findNavController()) } returns navController
-        every { (mockFragment.findNavController().currentDestination) } returns mockDestination
-        every { (mockDestination.id) } returns mockId
-        every { (navController.currentDestination) } returns mockDestination
-        every { (mockFragment.findNavController().currentDestination?.id) } answers { (mockDestination.id) }
+        mockContext =
+            mockk(relaxed = true) {
+                every { components.settings } returns settings
+            }
+        fragment =
+            spyk(Fragment()).apply {
+                every { context } returns mockContext
+            }
+
+        every { navControllerProvider.getNavController(fragment) } returns navController
+        every { navController.currentDestination } returns mockDestination
+        every { mockDestination.id } returns mockId
     }
 
     @Test
     fun `Test nav fun with ID and directions`() {
-        every { (mockFragment.findNavController().navigate(navDirections, null)) } just Runs
+        every { navController.navigate(navDirections, null) } just Runs
 
-        mockFragment.nav(mockId, navDirections)
-        verify { (mockFragment.findNavController().currentDestination) }
-        verify { (mockFragment.findNavController().navigate(navDirections, null)) }
-        confirmVerified(mockFragment)
+        fragment.nav(mockId, navDirections, navControllerProvider = navControllerProvider)
+        verify { navController.currentDestination }
+        verify { navController.navigate(navDirections, null) }
+        confirmVerified(fragment)
     }
 
     @Test
     fun `Test nav fun with ID, directions, and options`() {
-        every { (mockFragment.findNavController().navigate(navDirections, mockOptions)) } just Runs
+        every { navController.navigate(navDirections, mockOptions) } just Runs
 
-        mockFragment.nav(mockId, navDirections, mockOptions)
-        verify { (mockFragment.findNavController().currentDestination) }
-        verify { (mockFragment.findNavController().navigate(navDirections, mockOptions)) }
-        confirmVerified(mockFragment)
+        fragment.nav(mockId, navDirections, mockOptions, navControllerProvider = navControllerProvider)
+        verify { navController.currentDestination }
+        verify { navController.navigate(navDirections, mockOptions) }
+        confirmVerified(fragment)
+    }
+
+    @Test
+    fun `WHEN allowScreenCaptureInSecureScreens is true and a fragment is secured THEN FLAG_SECURE flag is added to the LayoutParams`() {
+        every { settings.allowScreenCaptureInSecureScreens } returns false
+
+        val testFragment = TestFragment(mockContext)
+
+        startFragment(testFragment)
+
+        testFragment.secure()
+
+        val flags = testFragment.requireActivity().window.attributes.flags
+        assertTrue(flags and WindowManager.LayoutParams.FLAG_SECURE != 0)
+    }
+
+    @Test
+    fun `WHEN allowScreenCaptureInSecureScreens is false and a fragment is secured THEN no window flags are added to the LayoutParams`() {
+        every { settings.allowScreenCaptureInSecureScreens } returns true
+
+        val testFragment = TestFragment(mockContext)
+
+        startFragment(testFragment)
+
+        testFragment.secure()
+
+        val flags = testFragment.requireActivity().window.attributes.flags
+        assertFalse(flags and WindowManager.LayoutParams.FLAG_SECURE != 0)
+    }
+
+    class TestFragment(private val mockContext: Context) : Fragment() {
+        override fun getContext(): Context? {
+            return mockContext
+        }
+    }
+
+    private fun startFragment(fragment: Fragment) {
+        val activity = Robolectric.buildActivity(FragmentActivity::class.java).create().start().resume().get()
+        activity.supportFragmentManager.beginTransaction().add(fragment, null).commitNow()
     }
 }

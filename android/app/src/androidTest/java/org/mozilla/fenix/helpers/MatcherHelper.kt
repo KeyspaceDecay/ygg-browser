@@ -14,9 +14,7 @@ import org.mozilla.fenix.helpers.TestAssetHelper.waitingTime
 import org.mozilla.fenix.helpers.TestAssetHelper.waitingTimeShort
 import org.mozilla.fenix.helpers.TestHelper.mDevice
 
-/**
- * Helper for querying and interacting with items based on their matchers.
- */
+/** Helper for querying and interacting with items based on their matchers. */
 object MatcherHelper {
 
     fun itemWithResId(resourceId: String): UiObject {
@@ -54,9 +52,24 @@ object MatcherHelper {
         return mDevice.findObject(UiSelector().resourceId(resourceId).index(index))
     }
 
+    fun itemWithTextAndIndex(itemText: String, index: Int): UiObject {
+        Log.i(TAG, "Looking for item with text: $itemText and index: $index")
+        return mDevice.findObject(UiSelector().text(itemText).index(index))
+    }
+
+    fun itemWithClassNameAndContainingDescription(className: String, description: String): UiObject {
+        Log.i(TAG, "Looking for item with class name: $className and description: $description")
+        return mDevice.findObject(UiSelector().className(className).descriptionContains(description))
+    }
+
     fun itemWithClassNameAndIndex(className: String, index: Int): UiObject {
         Log.i(TAG, "Looking for item with class name: $className and index: $index")
         return mDevice.findObject(UiSelector().className(className).index(index))
+    }
+
+    fun itemWithDescriptionAndIndex(className: String, index: Int): UiObject {
+        Log.i(TAG, "Looking for item with class name: $className and index: $index")
+        return mDevice.findObject(UiSelector().descriptionContains(className).index(index))
     }
 
     fun checkedItemWithResId(resourceId: String, isChecked: Boolean): UiObject {
@@ -66,17 +79,12 @@ object MatcherHelper {
 
     fun checkedItemWithResIdAndText(resourceId: String, text: String, isChecked: Boolean): UiObject {
         Log.i(TAG, "Looking for checked item with resource id: $resourceId and text: $text")
-        return mDevice.findObject(
-            UiSelector()
-                .resourceId(resourceId)
-                .textContains(text)
-                .checked(isChecked),
-        )
+        return mDevice.findObject(UiSelector().resourceId(resourceId).textContains(text).checked(isChecked))
     }
 
     fun itemWithResIdAndDescription(resourceId: String, description: String): UiObject {
         Log.i(TAG, "Looking for item with resource id: $resourceId and description: $description")
-        return mDevice.findObject(UiSelector().resourceId(resourceId).descriptionContains(description))
+        return mDevice.findObject(UiSelector().descriptionContains(description).resourceId(resourceId))
     }
 
     fun itemWithResIdAndText(resourceId: String, text: String): UiObject {
@@ -87,6 +95,11 @@ object MatcherHelper {
     fun itemWithResIdContainingText(resourceId: String, text: String): UiObject {
         Log.i(TAG, "Looking for item with resource id: $resourceId and containing text: $text")
         return mDevice.findObject(UiSelector().resourceId(resourceId).textContains(text))
+    }
+
+    fun itemWithPackageNameAndDescription(packageName: String, description: String): UiObject {
+        Log.i(TAG, "Looking for item with package name: $packageName and description: $description")
+        return mDevice.findObject(UiSelector().packageName(packageName).descriptionContains(description))
     }
 
     fun assertUIObjectExists(
@@ -107,7 +120,7 @@ object MatcherHelper {
         }
     }
 
-    fun assertUIObjectIsGone(vararg appItems: UiObject) {
+    fun assertUIObjectIsGone(vararg appItems: UiObject, waitingTime: Long = TestAssetHelper.waitingTime) {
         for (appItem in appItems) {
             Log.i(TAG, "assertUIObjectIsGone: Trying to verify that ${appItem.selector} is gone")
             assertTrue("${appItem.selector} is not gone", appItem.waitUntilGone(waitingTime))
@@ -118,19 +131,28 @@ object MatcherHelper {
     fun assertItemTextEquals(vararg appItems: UiObject, expectedText: String, isEqual: Boolean = true) {
         for (appItem in appItems) {
             if (isEqual) {
-                Log.i(TAG, "assertItemTextEquals: Trying to verify that ${appItem.selector} text equals to $expectedText")
+                Log.i(
+                    TAG,
+                    "assertItemTextEquals: Trying to verify that ${appItem.selector} text equals to $expectedText",
+                )
                 assertTrue(
                     "${appItem.selector} text does not equal to $expectedText",
                     appItem.text.equals(expectedText),
                 )
                 Log.i(TAG, "assertItemTextEquals: Verified ${appItem.selector} text equals to $expectedText")
             } else {
-                Log.i(TAG, "assertItemTextEquals: Trying to verify that ${appItem.selector} text does not equal to $expectedText")
+                Log.i(
+                    TAG,
+                    "assertItemTextEquals: Trying to verify that ${appItem.selector} text does not equal to $expectedText",
+                )
                 assertFalse(
                     "${appItem.selector} text equals to $expectedText",
                     appItem.text.equals(expectedText),
                 )
-                Log.i(TAG, "assertItemTextEquals: Verified that ${appItem.selector} text does not equal to $expectedText")
+                Log.i(
+                    TAG,
+                    "assertItemTextEquals: Verified that ${appItem.selector} text does not equal to $expectedText",
+                )
             }
         }
     }
@@ -146,11 +168,34 @@ object MatcherHelper {
         }
     }
 
-    fun assertItemIsEnabledAndVisible(vararg appItems: UiObject) {
+    fun assertItemIsEnabledAndVisible(vararg appItems: UiObject, isEnabled: Boolean = true) {
         for (appItem in appItems) {
-            Log.i(TAG, "assertItemIsEnabledAndVisible: Trying to verify that ${appItem.selector} is visible and enabled")
-            assertTrue(appItem.waitForExists(waitingTime) && appItem.isEnabled)
-            Log.i(TAG, "assertItemIsEnabledAndVisible: Verified ${appItem.selector} is visible and enabled")
+            if (isEnabled) {
+                Log.i(
+                    TAG,
+                    "assertItemIsEnabledAndVisible: Trying to verify that ${appItem.selector} is visible and enabled",
+                )
+                assertTrue(appItem.waitForExists(waitingTime) && appItem.isEnabled)
+                Log.i(TAG, "assertItemIsEnabledAndVisible: Verified ${appItem.selector} is visible and enabled")
+            } else {
+                Log.i(TAG, "assertItemIsEnabledAndVisible: Trying to verify that ${appItem.selector} is not enabled")
+                assertFalse(appItem.isEnabled)
+                Log.i(TAG, "assertItemIsEnabledAndVisible: Verified ${appItem.selector} is not enabled")
+            }
+        }
+    }
+
+    fun assertItemIsChecked(vararg appItems: UiObject, isChecked: Boolean = true) {
+        for (appItem in appItems) {
+            if (isChecked) {
+                Log.i(TAG, "assertItemIsChecked: Trying to verify that ${appItem.selector} is checked")
+                assertTrue(appItem.isChecked)
+                Log.i(TAG, "assertItemIsChecked: Verified ${appItem.selector} is checked")
+            } else {
+                Log.i(TAG, "assertItemIsChecked: Trying to verify that ${appItem.selector} is not checked")
+                assertFalse(appItem.isChecked)
+                Log.i(TAG, "assertItemIsChecked: Verified ${appItem.selector} is not checked")
+            }
         }
     }
 }

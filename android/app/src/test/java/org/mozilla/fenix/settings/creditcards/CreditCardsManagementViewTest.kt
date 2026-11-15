@@ -17,12 +17,12 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.R
 import org.mozilla.fenix.databinding.ComponentCreditCardsBinding
-import org.mozilla.fenix.helpers.FenixRobolectricTestRunner
 import org.mozilla.fenix.settings.autofill.AutofillFragmentState
 import org.mozilla.fenix.settings.creditcards.interactor.CreditCardsManagementInteractor
 import org.mozilla.fenix.settings.creditcards.view.CreditCardsManagementView
+import org.robolectric.RobolectricTestRunner
 
-@RunWith(FenixRobolectricTestRunner::class)
+@RunWith(RobolectricTestRunner::class)
 class CreditCardsManagementViewTest {
 
     private lateinit var view: ViewGroup
@@ -32,8 +32,10 @@ class CreditCardsManagementViewTest {
 
     @Before
     fun setup() {
-        view = LayoutInflater.from(testContext).inflate(CreditCardsManagementView.LAYOUT_ID, null)
-            .findViewById(R.id.credit_cards_wrapper)
+        view =
+            LayoutInflater.from(testContext)
+                .inflate(CreditCardsManagementView.LAYOUT_ID, null)
+                .findViewById(R.id.credit_cards_wrapper)
         componentCreditCardsBinding = ComponentCreditCardsBinding.bind(view)
         interactor = mockk(relaxed = true)
 
@@ -52,7 +54,7 @@ class CreditCardsManagementViewTest {
             AutofillFragmentState(
                 creditCards = creditCards,
                 isLoading = false,
-            ),
+            )
         )
 
         assertFalse(componentCreditCardsBinding.progressBar.isVisible)

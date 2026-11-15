@@ -22,9 +22,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.databinding.CollectionTabListRowBinding
 import org.mozilla.fenix.ext.components
-import org.mozilla.fenix.helpers.FenixRobolectricTestRunner
+import org.robolectric.RobolectricTestRunner
 
-@RunWith(FenixRobolectricTestRunner::class)
+@RunWith(RobolectricTestRunner::class)
 class CollectionCreationTabListAdapterTest {
 
     private lateinit var interactor: CollectionCreationInteractor
@@ -110,9 +110,10 @@ class CollectionCreationTabListAdapterTest {
 
     @Test
     fun `updateData inserts item`() {
-        val tab = mockk<Tab> {
-            every { sessionId } returns "abc"
-        }
+        val tab =
+            mockk<Tab> {
+                every { sessionId } returns "abc"
+            }
         val observer = mockk<RecyclerView.AdapterDataObserver>(relaxed = true)
         adapter.registerAdapterDataObserver(observer)
         adapter.updateData(
