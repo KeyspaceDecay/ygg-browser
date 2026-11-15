@@ -97,22 +97,6 @@
             android:label="@string/ygg_settings_title"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
 
-        <!-- separate launcher entry so crash logs can be read even if the
-             browser itself fails to start -->
-        <activity-alias
-            android:name=".ygg.YggDiagnosticsAlias"
-            android:enabled="true"
-            android:exported="true"
-            android:icon="@mipmap/ic_launcher_ygg"
-            android:label="@string/ygg_diag_title"
-            android:targetActivity=".ygg.YggSettingsActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity-alias>
-
         <service
             android:name=".ygg.YggstackService"
             android:exported="false"

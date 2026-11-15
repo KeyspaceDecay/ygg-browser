@@ -4238,6 +4238,7 @@
     <!-- Yggdrasil network -->
     <string name="ygg_menu_title">Yggdrasil network</string>
     <string name="ygg_settings_title">Yggdrasil Network</string>
+    <string name="ygg_settings_summary">Peers, SOCKS gateway, your address and keys</string>
     <string name="ygg_section_status">Status</string>
     <string name="ygg_section_settings">Settings</string>
     <string name="ygg_section_log">Log</string>

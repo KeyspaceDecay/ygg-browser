@@ -387,6 +387,13 @@ class SettingsFragment : PreferenceFragmentCompat(), SystemInsetsPaddedFragment 
                 }
 
                 // General preferences
+                resources.getString(R.string.pref_key_ygg_network) -> {
+                    startActivity(
+                        Intent(requireContext(), org.mozilla.fenix.ygg.YggSettingsActivity::class.java)
+                    )
+                    null
+                }
+
                 resources.getString(R.string.pref_key_search_settings) -> {
                     SettingsFragmentDirections.actionSettingsFragmentToSearchEngineFragment()
                 }

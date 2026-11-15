@@ -4,6 +4,7 @@
 <resources>
     <string name="pref_key_make_default_browser" translatable="false">pref_key_make_default_browser</string>
     <string name="pref_key_search_settings" translatable="false">pref_key_search_settings</string>
+    <string name="pref_key_ygg_network" translatable="false">pref_key_ygg_network</string>
     <string name="pref_key_search_engine" translatable="false">pref_key_search_engine</string>
     <string name="pref_key_add_search_engine" translatable="false">pref_key_add_Search_engine</string>
     <string name="pref_key_default_search_engine" translatable="false">pref_key_default_search_engine</string>
