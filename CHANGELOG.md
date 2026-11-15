@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-15
+
+### Fixed
+
+- Android: startup crash — the Yggdrasil gateway service called
+  Process.pid() which is not available on all runtimes
+  (NoSuchMethodError, reproduced and verified fixed on an API 35
+  emulator with a signed release build)
+- Android: on-device crash logs are captured again (the handler was
+  not carried over to the Fenix base)
+- Android: single launcher icon; the Yggdrasil network settings now
+  live inside the browser's Settings screen (Tor Browser style)
+
 ## [0.2.1] - 2026-11-15
 
 ### Fixed
@@ -88,7 +101,8 @@ First public release.
   yggstack nodes, SOCKS5 fetch via raw address and `.pk.ygg`), release
   packaging for Windows, Linux and Android
 
-[Unreleased]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.1.1...v0.1.2
