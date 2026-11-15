@@ -5,15 +5,15 @@
     android:installLocation="auto">
 
     <application
-        android:icon="@mipmap/ic_launcher_blue"
-        android:roundIcon="@mipmap/ic_launcher_blue"
+        android:icon="@mipmap/ic_launcher_ygg"
+        android:roundIcon="@mipmap/ic_launcher_ygg"
         tools:replace="icon,roundIcon">
 
         <activity-alias
             android:name="acr.browser.lightning.DefaultBrowserActivityOrange"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_orange"
+            android:icon="@mipmap/ic_launcher_ygg"
             android:targetActivity="acr.browser.lightning.DefaultBrowserActivity">
             <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.MAIN" />
@@ -29,7 +29,7 @@
             android:name="acr.browser.lightning.DefaultBrowserActivityBlue"
             android:enabled="true"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher_blue"
+            android:icon="@mipmap/ic_launcher_ygg"
             android:targetActivity="acr.browser.lightning.DefaultBrowserActivity">
             <intent-filter tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.MAIN" />
