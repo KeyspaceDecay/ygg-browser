@@ -74,7 +74,7 @@ jobs:
 
       - name: Build forkDebug variant
         env:
-          GRADLE_OPTS: -Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=4g -Xms1g -Xmx7g"
+          GRADLE_OPTS: -Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=3g -Xms1g -Xmx6g"
         run: ./gradlew app:assembleForkDebug -PversionName=0.0.0-ygg-ci --stacktrace --no-daemon
 
       - name: Upload APK artifact

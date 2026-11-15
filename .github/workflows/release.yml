@@ -122,8 +122,8 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          GRADLE_OPTS: -Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=4g -Xms1g -Xmx7g"
-        run: ./gradlew app:assembleForkRelease -PversionName=${GITHUB_REF_NAME#v} --stacktrace --no-daemon
+          GRADLE_OPTS: -Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=3g -Xms1g -Xmx6g"
+        run: ./gradlew app:assembleForkRelease -PversionName=${GITHUB_REF_NAME#v} -PdisableOptimization --stacktrace --no-daemon
 
       - name: Stage APK
         run: |
