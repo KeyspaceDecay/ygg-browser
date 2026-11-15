@@ -205,6 +205,35 @@ open class FenixApplication : Application(), Provider, ThemeProvider {
 
     override fun onCreate() {
         super.onCreate()
+
+        // Ygg Browser: keep crash logs on-device (no telemetry — the user
+        // decides whether to share them from Settings -> Yggdrasil Network)
+        if (isMainProcess()) {
+            val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+            Thread.setDefaultUncaughtExceptionHandler { thread, ex ->
+                runCatching {
+                    val dir = java.io.File(filesDir, "crash-logs").apply { mkdirs() }
+                    val old = dir.listFiles()?.sortedBy { it.name } ?: emptyList()
+                    if (old.size >= 5) {
+                        old.take(old.size - 4).forEach { it.delete() }
+                    }
+                    java.io.File(dir, "crash-" + System.currentTimeMillis() + ".txt").writeText(
+                        buildString {
+                            appendLine("time: " + java.util.Date())
+                            appendLine("thread: " + thread.name)
+                            appendLine("android: " + android.os.Build.VERSION.SDK_INT + " / " + android.os.Build.VERSION.INCREMENTAL)
+                            appendLine("device: " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL)
+                            appendLine()
+                            appendLine(android.util.Log.getStackTraceString(ex))
+                        }
+                    )
+                }
+                if (defaultHandler != null) {
+                    defaultHandler.uncaughtException(thread, ex)
+                }
+            }
+        }
+
         initializeFenixProcess()
     }
 
