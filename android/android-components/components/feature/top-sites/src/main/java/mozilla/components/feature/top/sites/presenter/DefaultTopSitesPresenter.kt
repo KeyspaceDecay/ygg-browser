@@ -57,6 +57,7 @@ class DefaultTopSitesPresenter(
                     totalSites = innerConfig.totalSites,
                     frecencyConfig = innerConfig.frecencyConfig,
                     providerConfig = innerConfig.providerConfig,
+                    showTopRecentSites = innerConfig.showTopRecentSites,
                 )
 
             withContext(Dispatchers.Main) {

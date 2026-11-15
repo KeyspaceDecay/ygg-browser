@@ -41,6 +41,8 @@ private const val MAX_SIZE = 32
 // https://searchfox.org/mozilla-central/rev/ef0aa879e94534ffd067a3748d034540a9fc10b0/toolkit/components/search/SearchUtils.sys.mjs#200
 internal val GENERAL_SEARCH_ENGINE_IDS =
     setOf(
+    "brave",
+    "startpage",
         GOOGLE_ID,
         "ddg",
         "bing",

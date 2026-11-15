@@ -59,10 +59,9 @@ jobs:
       - name: Install Android SDK pieces Gradle skips
         run: ./automation/iceraven/install-sdk.sh
 
-      - name: Patch android-components
-        run: |
-          ./automation/iceraven/patch_android_components.sh
-          ./automation/iceraven/setup_venv.sh
+      - name: Set up glean venv
+        run: ./automation/iceraven/setup_venv.sh
+        # (iceraven android-components patches are already committed)
 
       - name: Download yggstack binary (arm64)
         run: |

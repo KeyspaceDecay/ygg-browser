@@ -55,7 +55,7 @@ androidComponents {
         // CrashReport.kt and friends are generated into the objdir by the build system (not a
         // Gradle task), so register the directory as a static source.
         variant.sources.java.addStaticSourceDirectory(
-            "${gradle.mozconfig.topobjdir}/mobile/android/android-components/components/lib/crash/src/main/java".toString()
+            "${gradle.mozconfig.topobjdir}/android-components/components/lib/crash/src/main/java".toString()
         )
     }
 }

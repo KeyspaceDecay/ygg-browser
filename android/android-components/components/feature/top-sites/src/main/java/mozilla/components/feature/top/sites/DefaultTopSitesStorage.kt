@@ -130,6 +130,7 @@ private constructor(
         totalSites: Int,
         frecencyConfig: TopSitesFrecencyConfig?,
         providerConfig: TopSitesProviderConfig?,
+        showTopRecentSites: Boolean,
     ): List<TopSite> {
         val topSites = ArrayList<TopSite>()
         val pinnedSites = pinnedSitesStorage.getPinnedSites().take(totalSites)
@@ -165,7 +166,7 @@ private constructor(
 
         topSites.addAll(pinnedSites)
 
-        if (frecencyConfig?.frecencyTresholdOption != null && numSitesRequired > 0) {
+        if (showTopRecentSites && frecencyConfig?.frecencyTresholdOption != null && numSitesRequired > 0) {
             // Get 'totalSites' sites for duplicate entries with
             // existing pinned sites
             val frecentSites =

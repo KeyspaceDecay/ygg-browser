@@ -58,6 +58,7 @@ interface TopSitesStorage : Observable<TopSitesStorage.Observer> {
         totalSites: Int,
         frecencyConfig: TopSitesFrecencyConfig? = null,
         providerConfig: TopSitesProviderConfig? = null,
+        showTopRecentSites: Boolean = false,
     ): List<TopSite>
 
     /** Interface to be implemented by classes that want to observe the top site storage. */
