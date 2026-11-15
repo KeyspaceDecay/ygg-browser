@@ -7,9 +7,9 @@
 -->
 
 <resources xmlns:tools="http://schemas.android.com/tools">
-  <!-- App name for private browsing mode. %s is the name of the app (for example "Firefox"). -->
+  <!-- App name for private browsing mode. %s is the name of the app (for example "Ygg Browser"). -->
   <string name="app_name_private_5">Məxfi %s</string>
-  <!-- App name for private browsing mode. %s is the name of the app (for example "Firefox"). -->
+  <!-- App name for private browsing mode. %s is the name of the app (for example "Ygg Browser"). -->
   <string name="app_name_private_4">%s (Məxfi)</string>
   <!--
     Home Fragment
@@ -39,7 +39,7 @@
   <string name="application_search_hint">Axtarış sözlərini daxil edin</string>
   <!-- The header text displayed on the private tabs page when no private tabs are open -->
   <string name="tab_manager_empty_private_tabs_page_header">Məxfi səyahət</string>
-  <!-- The supplementary text displayed on the private tabs page when no private tabs are open. %1$s is the name of the app (for example "Firefox") -->
+  <!-- The supplementary text displayed on the private tabs page when no private tabs are open. %1$s is the name of the app (for example "Ygg Browser") -->
   <string name="tab_manager_empty_private_tabs_page_description">%1$s tarixçənizi və çərəzlərinizi yadda saxlamayacaq, ancaq yeni əlfəcinlər saxlanılacaq.</string>
   <!-- The header text displayed on the normal tabs page when no normal tabs are open -->
   <string name="tab_manager_empty_normal_tabs_page_header">Axtarışa başlamaq üçün yeni vərəq yaradın</string>
@@ -73,7 +73,7 @@
   <string name="home_bookmarks_show_all_content_description">Bütün əlfəcinləri göstər</string>
   <!-- Text for the menu button to remove a recently saved bookmark from the user's home screen -->
   <string name="home_bookmarks_menu_item_remove">Sil</string>
-  <!-- About content. %1$s is the name of the app (for example "Firefox"). -->
+  <!-- About content. %1$s is the name of the app (for example "Ygg Browser"). -->
   <string name="about_content" tools:ignore="BrandUsage">%1$s Mozilla tərəfindən hazırlanıb.</string>
   <!-- Private Browsing -->
   <string name="private_browsing_common_myths">Məxfi səyahət haqqında olan əfsanələr</string>
@@ -91,7 +91,7 @@
   <string name="felt_privacy_desc_card_title">Bu cihazda iz buraxmayın</string>
   <!--
     Description of private browsing mode displayed to users on the homepage when they enable private mode.
-    %1$s is the name of the app (for example "Firefox").
+    %1$s is the name of the app (for example "Ygg Browser").
   -->
   <string name="felt_privacy_info_card_subtitle_3">Bütün məxfi vərəqlərinizi bağladıqda %1$s çərəzlərinizi, tarixçənizi və sayt məlumatlarınızı silir.</string>
   <!--
@@ -103,7 +103,7 @@
   <!--
     Open in App "contextual feature recommendation" (CFR)
 
-    Text for the info message. %1$s is the name of the app (for example "Firefox").
+    Text for the info message. %1$s is the name of the app (for example "Ygg Browser").
   -->
   <string name="open_in_app_cfr_info_message_2">%1$s keçidləri avtomatik olaraq tətbiqlərdə açacaq şəkildə tənzimlənə bilər.</string>
   <!-- Text for the positive action button -->
@@ -130,7 +130,7 @@
   <string name="tab_tray_inactive_auto_close_title">Bir aydan sonra avtomatik bağlansın?</string>
   <!--
     Text for the body for the auto-close dialog of the inactive tabs.
-    %1$s is the name of the app (for example "Firefox").
+    %1$s is the name of the app (for example "Ygg Browser").
   -->
   <string name="tab_tray_inactive_auto_close_body_2">%1$s son bir ay ərzində baxmadığınız vərəqləri bağlaya bilər.</string>
   <!-- Content description for close button in the auto-close dialog of the inactive tabs. -->
@@ -243,12 +243,12 @@
   <string name="browser_menu_homepage">Ana səhifə</string>
   <!--
     Browser menu button shown in custom tabs that opens the current tab in Fenix
-    %1$s is the name of the app (for example "Firefox").
+    %1$s is the name of the app (for example "Ygg Browser").
   -->
   <string name="browser_menu_open_in_fenix">%1$s ilə aç</string>
   <!--
     Browser menu text shown in custom tabs to indicate this is a Fenix tab
-    %1$s is the name of the app (for example "Firefox").
+    %1$s is the name of the app (for example "Ygg Browser").
   -->
   <string name="browser_menu_powered_by2">%1$s Tərəfindən</string>
   <!-- Browser menu button to put the current page in reader mode -->
@@ -309,12 +309,12 @@
   <string name="browser_menu_print_2">Çap et</string>
   <!--
     Browser menu label for the Delete browsing data on quit feature.
-    %1$s is the name of the app (for example "Firefox").
+    %1$s is the name of the app (for example "Ygg Browser").
   -->
   <string name="browser_menu_delete_browsing_data_on_quit">%1$s proqramından çıx</string>
   <!--
     Content description for a banner within the menu which prompt the user to make this app their default browser.
-    %1$s is the name of the app (for example "Firefox").
+    %1$s is the name of the app (for example "Ygg Browser").
   -->
   <string name="browser_menu_default_banner_title">%1$s əsas səyyahınız olsun</string>
   <!-- Label text within the set as default banner -->
@@ -359,7 +359,7 @@
     Title for the AI controls settings screen
   -->
   <string name="preferences_ai_controls">Sİ idarəetmələri</string>
-  <!-- Headline text for the AI controls banner. %s is the name of the app (for example "Firefox"). -->
+  <!-- Headline text for the AI controls banner. %s is the name of the app (for example "Ygg Browser"). -->
   <string name="ai_controls_banner_headline">%s proqramında seçim həmişə sizindir</string>
   <!-- Supporting text for the AI controls banner. %s is a learn more link using ai_controls_learn_more as text. -->
   <string name="ai_controls_banner_supporting_text_2">Buraya Süni İntellekt ilə təkmilləşdirilmiş funksiyalardan istifadə edib-etməmək də daxildir. %s</string>
@@ -389,7 +389,7 @@
   <string name="search_suggestions_onboarding_do_not_allow_button">İcazə vermə</string>
   <!-- Search suggestion onboarding hint title text -->
   <string name="search_suggestions_onboarding_title">Məxfi sessiyada axtarış təkliflərinə icazə verilsin?</string>
-  <!-- Search suggestion onboarding hint description text, %s is the name of the app (for example "Firefox"). -->
+  <!-- Search suggestion onboarding hint description text, %s is the name of the app (for example "Ygg Browser"). -->
   <string name="search_suggestions_onboarding_text">%s ünvan sətrində yazdığınız hər şeyi əsas axtarış mühərriyiniz ilə paylaşacaq.</string>
   <!-- Text preview for smaller sized widgets -->
   <string name="search_widget_text_short">Axtar</string>
@@ -417,7 +417,7 @@
   <string name="preferences_rate">Google Play-də qiymətləndir</string>
   <!--
     Preference linking to about page for Fenix
-    %1$s is the name of the app (for example "Firefox").
+    %1$s is the name of the app (for example "Ygg Browser").
   -->
   <string name="preferences_about">%1$s Haqqında</string>
   <!-- Preference for settings related to changing the default browser -->
@@ -493,7 +493,7 @@
   -->
   <string name="fxa_received_tab_channel_name">Alınan vərəqlər</string>
   <!-- Description of the "receive tabs" notification channel. Displayed in the "App notifications" system settings for the app -->
-  <string name="fxa_received_tab_channel_description" tools:ignore="BrandUsage">Digər Firefox cihazlarından alınan vərəqlər üçün bildirişlər.</string>
+  <string name="fxa_received_tab_channel_description" tools:ignore="BrandUsage">Digər Ygg Browser cihazlarından alınan vərəqlər üçün bildirişlər.</string>
   <!-- The body for these is the URL of the tab received -->
   <string name="fxa_tab_received_notification_name">Vərəq alındı</string>
   <!-- %s is the device name -->
@@ -604,8 +604,8 @@
   <string name="studies_remove">Sil</string>
   <!-- Title of the active section on the studies list -->
   <string name="studies_active">Aktiv</string>
-  <!-- Description for studies. Note: The word "Firefox" should NOT be translated -->
-  <string name="studies_description_4" tools:ignore="BrandUsage">Firefox özəllikləri sınamaq üçün istifadəçiləri təsadüfi seçir və bu, keyfiyyəti hamı üçün yaxşılaşdırır.</string>
+  <!-- Description for studies. Note: The word "Ygg Browser" should NOT be translated -->
+  <string name="studies_description_4" tools:ignore="BrandUsage">Ygg Browser özəllikləri sınamaq üçün istifadəçiləri təsadüfi seçir və bu, keyfiyyəti hamı üçün yaxşılaşdırır.</string>
   <!-- Learn more link for studies, links to an article for more information about studies. -->
   <string name="studies_learn_more">Ətraflı öyrən</string>
   <!--
@@ -684,7 +684,7 @@
   <string name="remove_top_site">Sil</string>
   <!-- Text for the menu button to delete a top site from history -->
   <string name="delete_from_history">Tarixçədən sil</string>
-  <!-- Postfix for private WebApp titles. %1$s is the name of the app (for example "Firefox"). -->
+  <!-- Postfix for private WebApp titles. %1$s is the name of the app (for example "Ygg Browser"). -->
   <string name="pwa_site_controls_title_private">%1$s (Məxfi rejim)</string>
   <!-- Content description (not visible, for screen readers etc.) for the button to open the Tab Search feature to search through tabs. -->
   <string name="tab_manager_open_tab_search">Vərəq axtarışını aç</string>
@@ -968,11 +968,11 @@
     back from ETP details (Ex: Tracking content)
   -->
   <string name="etp_back_button_content_description">Geri get</string>
-  <!-- About page link text to open what's new link. %s is the name of the app (for example "Firefox"). -->
+  <!-- About page link text to open what's new link. %s is the name of the app (for example "Ygg Browser"). -->
   <string name="about_whats_new">%s yenilikləri</string>
   <!--
     Open source licenses page title
-    %s is the name of the app (for example "Firefox")
+    %s is the name of the app (for example "Ygg Browser")
   -->
   <string name="open_source_licenses_title">%s | OSS Kitabxanalar</string>
   <!-- About page link text to open support link -->

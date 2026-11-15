@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-15
+
+### Fixed
+
+- Android: the app is named "Ygg Browser" everywhere (the fork flavor
+  still carried the upstream "Iceraven" name and "Firefox" strings)
+
 ## [0.2.0] - 2026-11-15
 
 ### Changed
@@ -81,7 +88,8 @@ First public release.
   yggstack nodes, SOCKS5 fetch via raw address and `.pk.ygg`), release
   packaging for Windows, Linux and Android
 
-[Unreleased]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/KeyspaceDecay/ygg-browser/compare/v0.1.0...v0.1.1

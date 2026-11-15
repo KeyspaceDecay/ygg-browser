@@ -74,7 +74,7 @@
   <string name="search_suggestions_onboarding_allow_button">Atļaut</string>
   <!-- Search suggestion onboarding hint title text -->
   <string name="search_suggestions_onboarding_title">Atļaut meklēšanas ieteikumus privātajās sesijās?</string>
-  <!-- Search suggestion onboarding hint description text, %s is the name of the app (for example "Firefox"). -->
+  <!-- Search suggestion onboarding hint description text, %s is the name of the app (for example "Ygg Browser"). -->
   <string name="search_suggestions_onboarding_text">%s kopīgos visu adreses joslā ievadīto ar noklusējuma meklētāju.</string>
   <!-- Search engine suggestion title text. %s is the name of the suggested engine. -->
   <string name="search_engine_suggestions_title">Meklēt %s</string>
@@ -104,8 +104,8 @@
   <string name="nova_onboarding_set_to_default_button">Iestatīt kā noklusējuma pārlūku</string>
   <!-- Marketing onboarding body link text. -->
   <string name="nova_onboarding_marketing_body_link_text_1">Uzzināt vairāk</string>
-  <!-- "Add search widget" onboarding button. 'Firefox' is intentionally hardcoded. -->
-  <string name="nova_onboarding_add_search_widget_button" tools:ignore="BrandUsage">Pievienot Firefox logrīku</string>
+  <!-- "Add search widget" onboarding button. 'Ygg Browser' is intentionally hardcoded. -->
+  <string name="nova_onboarding_add_search_widget_button" tools:ignore="BrandUsage">Pievienot Ygg Browser logrīku</string>
   <!-- Text preview for smaller sized widgets -->
   <string name="search_widget_text_short">Meklēt</string>
   <!-- Text preview for larger sized widgets -->
@@ -362,7 +362,7 @@
   <!-- Send tab to synced devices: Empty state title - Displayed when the user has no synced devices -->
   <string name="sync_send_tab_empty_state_title">Nav savienota neviena ierīce</string>
   <!-- Send tab to synced devices: Empty state message - Displayed when the user has no synced devices -->
-  <string name="sync_send_tab_empty_state_description" tools:ignore="BrandUsage">Lai nosūtītu cilni, jāpiesakās Firefox vismaz vienā citā ierīcē.</string>
+  <string name="sync_send_tab_empty_state_description" tools:ignore="BrandUsage">Lai nosūtītu cilni, jāpiesakās Ygg Browser vismaz vienā citā ierīcē.</string>
   <!-- Send tab to synced devices: Empty state link - Displayed when the user has no synced devices -->
   <string name="sync_send_tab_empty_state_link">Uzzini, kā pievienot ierīci</string>
   <!-- Send tab to synced devices: Connectivity Error title -->
@@ -375,18 +375,18 @@
     Text shown in the notification that pops up to remind the user to set fenix as default browser.
     The app name is in the text, due to limitations with localizing Nimbus experiments
   -->
-  <string name="nimbus_notification_default_browser_text" tools:ignore="BrandUsage,UnusedResources">Padarīt Firefox par noklusējuma pārlūku</string>
+  <string name="nimbus_notification_default_browser_text" tools:ignore="BrandUsage,UnusedResources">Padarīt Ygg Browser par noklusējuma pārlūku</string>
   <!--
     Privacy report notification
 
     Name of the weekly privacy report notification channel. Displayed in the "App notifications" system settings for the app.
   -->
   <string name="notification_privacy_report_channel_name">Privātuma atskaite</string>
-  <!-- Description of the weekly privacy report notification channel. Displayed in the "App notifications" system settings for the app. %1$s is the app name (e.g. Firefox) -->
+  <!-- Description of the weekly privacy report notification channel. Displayed in the "App notifications" system settings for the app. %1$s is the app name (e.g. Ygg Browser) -->
   <string name="notification_privacy_report_channel_description">%1$s parāda, cik izsekotāju tika aizturēti pārlūkošanas laikā.</string>
-  <!-- Body text for the weekly privacy report notification for when trackers have been blocked. %1$s is the app name (e.g. Firefox) -->
+  <!-- Body text for the weekly privacy report notification for when trackers have been blocked. %1$s is the app name (e.g. Ygg Browser) -->
   <string name="notification_privacy_report_body_has_trackers">Turpini pārlūkot! %1$s turpinās aizturēt.</string>
-  <!-- Headline text of the weekly privacy report notification for when no trackers have been blocked. %1$s is the app name (e.g. Firefox) -->
+  <!-- Headline text of the weekly privacy report notification for when no trackers have been blocked. %1$s is the app name (e.g. Ygg Browser) -->
   <string name="notification_privacy_report_headline_no_trackers">%1$s aiztur izsekotājus, kamēr Tu pārlūko. Tie būs redzami šeit.</string>
   <!-- Tab collection deletion prompt dialog message. %1$s is the collection name. -->
   <string name="tab_collection_dialog_message">Vai tiešām izdzēst %1$s?</string>
@@ -492,7 +492,7 @@
   <string name="login_deletion_confirmation_2">Vai tiešām izdzēst šo paroli?</string>
   <!-- The page title for adding new password. -->
   <string name="add_login_2">Pievienot paroli</string>
-  <!-- Text displayed when user has disabled tab syncing in Firefox Sync Account -->
+  <!-- Text displayed when user has disabled tab syncing in Ygg Browser Sync Account -->
   <string name="synced_tabs_enable_tab_syncing">Lūgums iespējot ciļņu vienādošanu.</string>
   <!--
     Label for the button in the shortcuts home screen section that expands the section to show
@@ -546,7 +546,7 @@
   <string name="download_language_all_languages_item_preference_to_delete">Izdzēst visas valodas</string>
   <!-- The title of the warning card informs the user that an error has occurred when fetching the list of languages. -->
   <string name="download_languages_fetch_error_warning_text">Nevarēja ielādēt valodas. Lūgums atgriezties vēlāk.</string>
-  <!-- Additional information for the dialog used by the translations feature to confirm deleting a language. %1$s is the name of the app (for example "Firefox"). -->
+  <!-- Additional information for the dialog used by the translations feature to confirm deleting a language. %1$s is the name of the app (for example "Ygg Browser"). -->
   <string name="delete_language_file_dialog_message">Ja izdzēsīsi šo valodu, %1$s tulkošanas laikā kešatmiņā lejupielādēs daļējas valodas.</string>
   <!--
     Title for the dialog used by the translations feature to confirm deleting all languages file.
@@ -554,7 +554,7 @@
     %1$s is the size in kilobytes or megabytes of the language file.
   -->
   <string name="delete_language_all_languages_file_dialog_title">Izdzēst visas valodas (%1$s)?</string>
-  <!-- Additional information for the dialog used by the translations feature to confirm deleting all languages file. %1$s is the name of the app (for example "Firefox"). -->
+  <!-- Additional information for the dialog used by the translations feature to confirm deleting all languages file. %1$s is the name of the app (for example "Ygg Browser"). -->
   <string name="delete_language_all_languages_file_dialog_message">Ja izdzēsīsi visas valodas, %1$s tulkošanas laikā kešatmiņā lejupielādēs daļējas valodas.</string>
   <!--
     Unified Trust Panel
@@ -653,9 +653,9 @@
   <string name="lens_camera_upload_failed">Nevarēja iegūt iznākumu no Google Lens</string>
   <!-- Action in the snackbar shown when an image picked from the gallery or taken with the camera could not be searched with Google Lens. Tapping it searches the same image again. -->
   <string name="lens_camera_upload_failed_retry_button">Mēģināt vēlreiz</string>
-  <!-- Title of the Firefox Labs Sandboxing experiment. -->
+  <!-- Title of the Ygg Browser Labs Sandboxing experiment. -->
   <string name="firefox_labs_website_isolation_title" tools:ignore="UnusedResources">Tīmekļvietnes nošķiršana</string>
-  <!-- Description of the Firefox Labs Sandboxing experiment. -->
+  <!-- Description of the Ygg Browser Labs Sandboxing experiment. -->
   <string name="firefox_labs_website_isolation_description" tools:ignore="UnusedResources">Papildu šķērslis starp tīmekļvietnēm, kas palīdz aizsargāt datus cilnēs. Var ietekmēt veiktspēju, noturīgumu, tīmekļvietņu saderīgumu un to, kā tiek saglabāta pārlūkošanas vēsture.</string>
   <!--
     PDF viewer toolbar and buttons
