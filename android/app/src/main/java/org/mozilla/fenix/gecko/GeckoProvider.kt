@@ -110,7 +110,7 @@ object GeckoProvider {
 
         // Yggdrasil: apply SOCKS proxy config (network.proxy.*) if enabled
         if (org.mozilla.fenix.ygg.YggProxy.isEnabledConfigPresent(context)) {
-            builder.configFile(org.mozilla.fenix.ygg.YggProxy.configPath(context).absolutePath)
+            builder.configFilePath(org.mozilla.fenix.ygg.YggProxy.configPath(context).absolutePath)
         }
 
         builder
