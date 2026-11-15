@@ -52,8 +52,8 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: >-
-            UNIVERSAL=$(ls android/app/build/outputs/apk/forkDebug/*universal*.apk 2>/dev/null | head -1);
-            [ -n "$UNIVERSAL" ] || UNIVERSAL=$(find android/app/build/outputs/apk/forkDebug -name "*.apk" | grep -v "x86" | head -1);
+            UNIVERSAL=$(ls android/gradle/build/app/outputs/apk/forkDebug/*universal*.apk 2>/dev/null | head -1);
+            [ -n "$UNIVERSAL" ] || UNIVERSAL=$(find android/gradle/build/app/outputs/apk/forkDebug -name "*.apk" | grep -v "x86" | head -1);
             echo "APK=$UNIVERSAL";
             adb install -r -t "$UNIVERSAL";
             adb shell pm list packages | grep forkmaintainers;
