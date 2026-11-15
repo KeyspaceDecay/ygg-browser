@@ -5,9 +5,9 @@ on:
 
 jobs:
   emulator-run:
-    name: Launch forkDebug APK on API 35 emulator
+    name: Launch forkRelease APK on API 35 emulator
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     defaults:
       run:
         working-directory: android
@@ -34,16 +34,24 @@ jobs:
             https://github.com/yggdrasil-network/yggstack/releases/download/1.0.6/yggstack-android-amd64
           chmod +x app/src/main/jniLibs/*/libyggstack.so
 
+      - name: Prepare signing keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > /tmp/ygg-release.keystore
+
       - name: Enable x86_64 ABI for the emulator build
         run: |
           sed -i 's/include "arm64-v8a"/include "arm64-v8a", "x86_64"/' app/build.gradle
 
-      - name: Build forkDebug
+      - name: Build signed forkRelease
         env:
+          KEYSTORE_FILE: /tmp/ygg-release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           GRADLE_OPTS: -Dorg.gradle.jvmargs="-XX:MaxMetaspaceSize=3g -Xms1g -Xmx6g"
-        run: ./gradlew app:assembleForkDebug -PversionName=0.0.0-test --stacktrace --no-daemon
+        run: ./gradlew app:assembleForkRelease -PversionName=0.0.0-test -PdisableOptimization --stacktrace --no-daemon
 
-      - name: Run on emulator
+      - name: Run release APK on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -52,20 +60,21 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: >-
-            UNIVERSAL=$(ls android/gradle/build/app/outputs/apk/forkDebug/*universal*.apk 2>/dev/null | head -1);
-            [ -n "$UNIVERSAL" ] || UNIVERSAL=$(find android/gradle/build/app/outputs/apk/forkDebug -name "*.apk" | grep -v "x86" | head -1);
+            UNIVERSAL=$(ls android/gradle/build/app/outputs/apk/forkRelease/*universal*.apk 2>/dev/null | head -1);
+            [ -n "$UNIVERSAL" ] || UNIVERSAL=$(find android/gradle/build/app/outputs/apk/forkRelease -name "*universal*.apk" | head -1);
             echo "APK=$UNIVERSAL";
-            adb install -r -t "$UNIVERSAL";
-            adb shell pm list packages | grep forkmaintainers;
+            adb install -r "$UNIVERSAL";
+            adb shell pm list packages | grep ygg;
             adb logcat -c;
-            adb shell monkey -p io.github.forkmaintainers.ygg.debug -c android.intent.category.LAUNCHER 1;
-            sleep 45;
+            adb shell am start -W -n io.github.forkmaintainers.ygg/org.mozilla.fenix.HomeActivity;
+            sleep 90;
             echo "=== crash buffer ===";
             adb logcat -b crash -d;
-            echo "=== FATAL/Gecko ===";
-            adb logcat -d | grep -iE "FATAL|SIGSEGV|SIGABRT|AndroidRuntime|libxul|Gecko|mozalloc|ygg" | tail -200;
+            echo "=== ygg/gecko/fatal ===";
+            adb logcat -d | grep -iE "forkmaintainers|FATAL|SIGSEGV|SIGABRT|AndroidRuntime|libxul|Gecko|mozalloc|ygg|ANR" | tail -250;
             echo "=== process alive? ===";
-            adb shell pidof io.github.forkmaintainers.ygg.debug || echo "PROCESS DEAD - CRASHED";
+            adb shell pidof io.github.forkmaintainers.ygg || echo "PROCESS DEAD - CRASHED";
+            adb exec-out screencap -p > /tmp/out-screen.png;
             mkdir -p /tmp/out;
             adb logcat -d > /tmp/out/logcat-full.txt;
             adb logcat -b crash -d > /tmp/out/logcat-crash.txt
@@ -78,4 +87,5 @@ jobs:
           path: |
             /tmp/out/logcat-full.txt
             /tmp/out/logcat-crash.txt
+            /tmp/out-screen.png
           if-no-files-found: warn
