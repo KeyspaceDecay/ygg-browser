@@ -11,8 +11,10 @@ desktop/
   See desktop/LICENSE.txt for the full license text.
 
 android/
-  Based on Lightning Browser (https://github.com/anthonycr/Lightning-Browser)
-  Copyright (c) A.C.R. Development
+  Based on Iceraven (https://github.com/fork-maintainers/iceraven-browser),
+  a fork of Mozilla's Fenix (Firefox for Android), and on the Iceraven
+  project's mirrored android-components tree.
+  Copyright (c) Mozilla contributors and Iceraven fork-maintainers
   Licensed under the Mozilla Public License, Version 2.0.
   Modifications for Ygg Browser are additionally licensed MPL-2.0.
   See android/LICENSE for the full license text.

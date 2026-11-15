@@ -6,9 +6,10 @@ Windows · Linux · Android
 > Your keys. Your address. No ICANN, no ISPs, no permission.
 
 Ygg Browser is a fork of two respected open-source browsers — [Min](https://github.com/minbrowser/min)
-(desktop, Apache-2.0) and [Lightning](https://github.com/anthonycr/Lightning-Browser)
-(Android, MPL-2.0) — with a built-in [yggstack](https://github.com/yggdrasil-network/yggstack)
-sidecar that turns the browser into a full node of the Yggdrasil network.
+(desktop, Apache-2.0) and [Iceraven](https://github.com/fork-maintainers/iceraven-browser)/
+Firefox for Android, GeckoView, MPL-2.0 — with a built-in
+[yggstack](https://github.com/yggdrasil-network/yggstack) sidecar that turns
+the browser into a full node of the Yggdrasil network.
 
 ## How it works
 
@@ -98,22 +99,26 @@ Run the network smoke test (two local nodes + SOCKS5 + `.pk.ygg` DNS):
 node scripts/smoke-test.js
 ```
 
-### Android
+### Android (Firefox 160 / GeckoView, based on Iceraven)
 
-Requires JDK 21 and the Android SDK.
+Requires JDK 17, the Android SDK and Python 3.
 
 ```sh
 cd android
+./automation/iceraven/install-sdk.sh
+./automation/iceraven/setup_venv.sh
 mkdir -p app/src/main/jniLibs/arm64-v8a
 curl -fL -o app/src/main/jniLibs/arm64-v8a/libyggstack.so \
   https://github.com/yggdrasil-network/yggstack/releases/download/1.0.6/yggstack-android-arm64
 chmod +x app/src/main/jniLibs/arm64-v8a/libyggstack.so
-./gradlew lightningLiteDebug assembleDebug
+./gradlew app:assembleForkDebug -PversionName=0.2.0 --no-daemon
 ```
 
-The yggstack binary is packaged as `libyggstack.so` in `jniLibs`, because
-Android 10+ only allows executing binaries from the app's native library
-directory. Only `arm64-v8a` is shipped.
+The proxy is applied through Gecko's own `network.proxy.*` preferences
+(SOCKS5, remote DNS) before the engine starts — no WebView dependency at
+all. The yggstack binary is packaged as `libyggstack.so` in `jniLibs`,
+because Android 10+ only allows executing binaries from the app's native
+library directory. Only `arm64-v8a` is shipped.
 
 ## Repository layout
 
@@ -123,9 +128,9 @@ desktop/   Electron browser based on Min + ygg integration
   pages/yggSettings/   network settings page
   pages/newtab/        start page with known Yggdrasil services
   scripts/smoke-test.js  e2e network test
-android/   WebView browser based on Lightning + ygg integration
+android/   Firefox 160 (Iceraven/GeckoView) + ygg integration
   .../ygg/YggstackService.kt   foreground service running yggstack
-  .../ygg/YggProxy.kt          WebView proxy (fail-closed)
+  .../ygg/YggProxy.kt          Gecko SOCKS5 proxy (network.proxy.*)
   .../ygg/YggSettingsActivity.kt  network settings screen
 scripts/   shared helpers (yggstack downloader)
 vendor/    yggstack release binaries (not committed, downloaded on demand)
@@ -138,8 +143,10 @@ vendor/    yggstack release binaries (not committed, downloaded on demand)
   and `NOTICE.md`.
 - Desktop browser: [Min](https://github.com/minbrowser/min) by PalmerAL
   et al., Apache-2.0.
-- Android browser: [Lightning Browser](https://github.com/anthonycr/Lightning-Browser)
-  by A.C.R. Development, MPL-2.0.
+- Android browser: [Iceraven](https://github.com/fork-maintainers/iceraven-browser)
+  by fork-maintainers (itself a fork of Mozilla's Fenix) — MPL-2.0, and
+  their mirrored `android-components` which keeps the build reproducible
+  after mozilla-mobile/firefox-android was archived.
 - [yggstack](https://github.com/yggdrasil-network/yggstack) and
   [Yggdrasil-go](https://github.com/yggdrasil-network/yggdrasil-go),
   LGPL-3.0 with a linking exception — distributed as unmodified release
